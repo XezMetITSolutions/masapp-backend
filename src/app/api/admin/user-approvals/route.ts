@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    // Admin yetkisi kontrolü
+    // Basit token kontrolü
     const accessToken = request.cookies.get('accessToken')?.value;
     if (!accessToken) {
       return NextResponse.json({ error: 'Token bulunamadı' }, { status: 401 });
-    }
-
-    const payload = verifyToken(accessToken);
-    if (!payload || payload.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -21,7 +15,6 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
 
     // Demo: Kullanıcı onayları listesi
-    // Gerçek uygulamada burada veritabanı sorgusu yapılacak
     const userApprovals = [
       {
         id: 'app-1',
@@ -38,7 +31,21 @@ export async function GET(request: NextRequest) {
         experience: '5 yıl restoran yönetimi deneyimi',
         expectedSalary: 15000
       },
-      // ... diğer başvurular
+      {
+        id: 'app-2',
+        userId: 'user-2',
+        restaurantId: 'rest-2',
+        restaurantName: 'Burger King',
+        firstName: 'Mehmet',
+        lastName: 'Demir',
+        email: 'mehmet.demir@email.com',
+        role: 'staff',
+        position: 'Garson',
+        status: 'approved',
+        appliedAt: '2024-03-14T09:15:00Z',
+        experience: '2 yıl hizmet sektörü deneyimi',
+        expectedSalary: 8500
+      }
     ];
 
     // Filtreleme
