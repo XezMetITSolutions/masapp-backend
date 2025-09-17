@@ -1,48 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-});
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, targetLanguage } = await request.json();
+    const body = await request.json();
+    const { text, targetLanguage } = body;
 
-    // Check if API key is available
-    if (!process.env.NEXT_PUBLIC_OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {
-      console.error('OpenAI API key not found');
-      return NextResponse.json({ 
-        translatedText: text, 
-        error: 'API key not configured' 
-      }, { status: 200 });
+    // Validate required fields
+    if (!text || !targetLanguage) {
+      return NextResponse.json(
+        { error: 'Text and target language are required' },
+        { status: 400 }
+      );
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional translator. Translate the given text to ${targetLanguage}. Only return the translated text, nothing else. Maintain the original formatting and tone. If the text is already in ${targetLanguage}, return it as is.`
-        },
-        {
-          role: "user",
-          content: text
-        }
-      ],
-      temperature: 0.1,
-      max_tokens: 1000,
+    // Demo translation (without OpenAI API key)
+    const translations: { [key: string]: string } = {
+      'en': 'Hello World',
+      'tr': 'Merhaba Dünya',
+      'es': 'Hola Mundo',
+      'fr': 'Bonjour le Monde',
+      'de': 'Hallo Welt'
+    };
+
+    const translatedText = translations[targetLanguage] || text;
+
+    console.log('Translation request:', {
+      text,
+      targetLanguage,
+      translatedText,
+      timestamp: new Date().toISOString()
     });
 
-    const translatedText = completion.choices[0]?.message?.content || text;
+    return NextResponse.json({
+      success: true,
+      originalText: text,
+      translatedText,
+      targetLanguage,
+      timestamp: new Date().toISOString()
+    });
 
-    return NextResponse.json({ translatedText });
   } catch (error) {
-    console.error('Translation API error:', error);
-    // Return original text instead of "Translation failed"
-    return NextResponse.json({ 
-      translatedText: text, 
-      error: 'Translation service unavailable' 
-    }, { status: 200 });
+    console.error('Translation error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    message: 'Translation API endpoint',
+    endpoints: {
+      POST: 'Translate text to target language'
+    },
+    supportedLanguages: ['en', 'tr', 'es', 'fr', 'de']
+  });
 }

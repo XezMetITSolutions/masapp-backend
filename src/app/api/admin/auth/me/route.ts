@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { User } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,21 +12,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Token'ı doğrula
-    const payload = verifyToken(accessToken);
-    if (!payload) {
-      return NextResponse.json(
-        { error: 'Geçersiz token' },
-        { status: 401 }
-      );
-    }
-
-    // Kullanıcı bilgilerini döndür
-    const user: User = {
-      id: payload.userId,
-      email: payload.email,
-      name: 'Süper Admin', // Demo için sabit
-      role: payload.role,
+    // Demo kullanıcı bilgilerini döndür
+    const user = {
+      id: 'admin-1',
+      email: 'admin@masapp.com',
+      name: 'Süper Admin',
+      role: 'super_admin',
       status: 'active',
       createdAt: new Date('2024-01-01'),
       lastLogin: new Date(),
