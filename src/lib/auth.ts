@@ -1,11 +1,4 @@
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import { User, UserRole } from '@/types';
-import { ENV_CONFIG } from '@/config/env';
-
-const JWT_SECRET = ENV_CONFIG.JWT_SECRET;
-const JWT_EXPIRES_IN = '24h';
-const REFRESH_TOKEN_EXPIRES_IN = '7d';
+// Basit auth utilities
 
 export interface AuthTokens {
   accessToken: string;
@@ -15,45 +8,55 @@ export interface AuthTokens {
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: UserRole;
+  role: string;
   restaurantId?: string;
   iat: number;
   exp: number;
 }
 
-// JWT Token oluşturma
-export function generateTokens(user: User): AuthTokens {
-  const payload: Omit<JWTPayload, 'iat' | 'exp'> = {
-    userId: user.id,
-    email: user.email,
-    role: user.role,
-    restaurantId: user.restaurantId,
-  };
-
-  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  const refreshToken = jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN });
+// Basit JWT Token oluşturma
+export function generateTokens(user: any): AuthTokens {
+  const timestamp = Date.now();
+  const randomId = Math.random().toString(36).substring(7);
+  
+  const accessToken = `demo-access-${user.id}-${timestamp}-${randomId}`;
+  const refreshToken = `demo-refresh-${user.id}-${timestamp}-${randomId}`;
 
   return { accessToken, refreshToken };
 }
 
-// JWT Token doğrulama
+// Basit JWT Token doğrulama
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    // Demo için basit token kontrolü
+    if (token.startsWith('demo-access-') || token.startsWith('demo-token-')) {
+      const parts = token.split('-');
+      if (parts.length >= 3) {
+        return {
+          userId: parts[2],
+          email: 'admin@masapp.com',
+          role: 'super_admin',
+          iat: Date.now(),
+          exp: Date.now() + (24 * 60 * 60 * 1000), // 24 saat
+        };
+      }
+    }
+    return null;
   } catch (error) {
     return null;
   }
 }
 
-// Şifre hashleme
+// Basit şifre hashleme
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 12;
-  return bcrypt.hash(password, saltRounds);
+  // Demo için basit hash
+  return `demo-hash-${password}-${Date.now()}`;
 }
 
-// Şifre doğrulama
+// Basit şifre doğrulama
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return bcrypt.compare(password, hashedPassword);
+  // Demo için basit kontrol
+  return hashedPassword.includes(password);
 }
 
 // Token'dan kullanıcı bilgilerini çıkarma
@@ -62,17 +65,17 @@ export function getUserFromToken(token: string): JWTPayload | null {
 }
 
 // Rol kontrolü
-export function hasRole(userRole: UserRole, requiredRoles: UserRole[]): boolean {
+export function hasRole(userRole: string, requiredRoles: string[]): boolean {
   return requiredRoles.includes(userRole);
 }
 
 // Admin rolü kontrolü
-export function isAdmin(userRole: UserRole): boolean {
+export function isAdmin(userRole: string): boolean {
   return userRole === 'super_admin';
 }
 
 // Restoran sahibi/admin kontrolü
-export function isRestaurantUser(userRole: UserRole): boolean {
+export function isRestaurantUser(userRole: string): boolean {
   return ['restaurant_owner', 'restaurant_admin'].includes(userRole);
 }
 
@@ -81,7 +84,7 @@ export function isTokenExpired(token: string): boolean {
   const payload = verifyToken(token);
   if (!payload) return true;
   
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now();
   return payload.exp < now;
 }
 

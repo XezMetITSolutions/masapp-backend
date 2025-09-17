@@ -1,12 +1,11 @@
-import { z } from 'zod';
-import DOMPurify from 'isomorphic-dompurify';
+// Basit validation utilities
 
 // XSS koruması için HTML temizleme
 export function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-    ALLOWED_ATTR: []
-  });
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .trim();
 }
 
 // SQL injection koruması için string temizleme
@@ -19,139 +18,82 @@ export function sanitizeString(input: string): string {
 }
 
 // Email validasyonu
-export const emailSchema = z.string()
-  .trim()
-  .email('Geçerli bir email adresi giriniz')
-  .max(255, 'Email adresi çok uzun')
-  .transform(email => email.toLowerCase());
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
 // Şifre validasyonu
-export const passwordSchema = z.string()
-  .min(8, 'Şifre en az 8 karakter olmalıdır')
-  .max(128, 'Şifre çok uzun')
-  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-    'Şifre en az bir küçük harf, bir büyük harf, bir rakam ve bir özel karakter içermelidir');
+export function isValidPassword(password: string): boolean {
+  return password.length >= 8 && 
+         password.length <= 128 &&
+         /[a-z]/.test(password) && // küçük harf
+         /[A-Z]/.test(password) && // büyük harf
+         /\d/.test(password) && // rakam
+         /[@$!%*?&]/.test(password); // özel karakter
+}
 
-// Kullanıcı kayıt validasyonu
-export const userRegistrationSchema = z.object({
-  name: z.string()
-    .min(2, 'İsim en az 2 karakter olmalıdır')
-    .max(50, 'İsim çok uzun')
-    .transform(name => sanitizeString(name)),
-  email: emailSchema,
-  password: passwordSchema,
-  phone: z.string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Geçerli bir telefon numarası giriniz')
-    .optional(),
-  role: z.enum(['admin', 'manager', 'staff', 'customer'])
-    .default('customer')
-});
+// Basit kullanıcı kayıt validasyonu
+export function validateUserRegistration(data: any): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
 
-// Kullanıcı güncelleme validasyonu
-export const userUpdateSchema = z.object({
-  name: z.string()
-    .min(2, 'İsim en az 2 karakter olmalıdır')
-    .max(50, 'İsim çok uzun')
-    .transform(name => sanitizeString(name))
-    .optional(),
-  email: emailSchema.optional(),
-  phone: z.string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Geçerli bir telefon numarası giriniz')
-    .optional(),
-  role: z.enum(['admin', 'manager', 'staff', 'customer'])
-    .optional(),
-  status: z.enum(['active', 'inactive', 'pending', 'suspended'])
-    .optional()
-});
+  if (!data.name || data.name.length < 2 || data.name.length > 50) {
+    errors.push('İsim en az 2, en fazla 50 karakter olmalıdır');
+  }
 
-// Restoran validasyonu
-export const restaurantSchema = z.object({
-  name: z.string()
-    .min(2, 'Restoran adı en az 2 karakter olmalıdır')
-    .max(100, 'Restoran adı çok uzun')
-    .transform(name => sanitizeString(name)),
-  category: z.string()
-    .min(2, 'Kategori en az 2 karakter olmalıdır')
-    .max(50, 'Kategori çok uzun')
-    .transform(category => sanitizeString(category)),
-  address: z.string()
-    .min(10, 'Adres en az 10 karakter olmalıdır')
-    .max(500, 'Adres çok uzun')
-    .transform(address => sanitizeString(address)),
-  phone: z.string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Geçerli bir telefon numarası giriniz'),
-  email: emailSchema,
-  description: z.string()
-    .max(1000, 'Açıklama çok uzun')
-    .transform(desc => sanitizeHtml(desc))
-    .optional(),
-  ownerId: z.string().uuid('Geçerli bir sahip ID giriniz')
-});
+  if (!data.email || !isValidEmail(data.email)) {
+    errors.push('Geçerli bir email adresi giriniz');
+  }
 
-// Bildirim validasyonu
-export const notificationSchema = z.object({
-  type: z.enum(['info', 'warning', 'error', 'success', 'system']),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  title: z.string()
-    .min(1, 'Başlık gereklidir')
-    .max(200, 'Başlık çok uzun')
-    .transform(title => sanitizeString(title)),
-  message: z.string()
-    .min(1, 'Mesaj gereklidir')
-    .max(1000, 'Mesaj çok uzun')
-    .transform(message => sanitizeHtml(message)),
-  recipientType: z.enum(['all', 'admin', 'restaurant', 'user']),
-  recipientId: z.string().uuid().optional(),
-  channel: z.enum(['email', 'sms', 'push', 'in_app']),
-  scheduledAt: z.string().datetime().optional()
-});
+  if (!data.password || !isValidPassword(data.password)) {
+    errors.push('Şifre en az 8 karakter olmalı ve büyük harf, küçük harf, rakam ve özel karakter içermelidir');
+  }
 
-// Sistem ayarı validasyonu
-export const systemSettingSchema = z.object({
-  key: z.string()
-    .min(1, 'Ayar anahtarı gereklidir')
-    .max(100, 'Ayar anahtarı çok uzun')
-    .regex(/^[A-Z_]+$/, 'Ayar anahtarı sadece büyük harf ve alt çizgi içerebilir'),
-  value: z.string()
-    .max(1000, 'Ayar değeri çok uzun'),
-  category: z.enum(['general', 'security', 'email', 'payment', 'notification', 'api']),
-  sensitive: z.boolean().default(false)
-});
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
 
-// Arama validasyonu
-export const searchSchema = z.object({
-  query: z.string()
-    .min(1, 'Arama terimi gereklidir')
-    .max(100, 'Arama terimi çok uzun')
-    .transform(query => sanitizeString(query)),
-  type: z.enum(['all', 'users', 'restaurants', 'orders', 'notifications']).optional(),
-  page: z.number().int().min(1).max(1000).default(1),
-  limit: z.number().int().min(1).max(100).default(10)
-});
+// Basit restoran validasyonu
+export function validateRestaurant(data: any): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
 
-// ID validasyonu
-export const idSchema = z.string().uuid('Geçerli bir ID giriniz');
+  if (!data.name || data.name.length < 2 || data.name.length > 100) {
+    errors.push('Restoran adı en az 2, en fazla 100 karakter olmalıdır');
+  }
 
-// Pagination validasyonu
-export const paginationSchema = z.object({
-  page: z.number().int().min(1).max(1000).default(1),
-  limit: z.number().int().min(1).max(100).default(10),
-  sortBy: z.string().max(50).optional(),
-  sortOrder: z.enum(['asc', 'desc']).default('desc')
-});
+  if (!data.address || data.address.length < 10 || data.address.length > 500) {
+    errors.push('Adres en az 10, en fazla 500 karakter olmalıdır');
+  }
+
+  if (!data.phone || !/^\+?[1-9]\d{1,14}$/.test(data.phone)) {
+    errors.push('Geçerli bir telefon numarası giriniz');
+  }
+
+  if (!data.email || !isValidEmail(data.email)) {
+    errors.push('Geçerli bir email adresi giriniz');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
 
 // Güvenli validasyon wrapper
-export function safeValidate<T>(schema: z.ZodSchema<T>, data: unknown): { success: boolean; data?: T; error?: string } {
+export function safeValidate(validator: (data: any) => { isValid: boolean; errors: string[] }, data: unknown): { success: boolean; data?: any; error?: string } {
   try {
-    const result = schema.parse(data);
-    return { success: true, data: result };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+    const result = validator(data);
+    if (result.isValid) {
+      return { success: true, data };
+    } else {
       return { 
         success: false, 
-        error: error.errors.map(e => e.message).join(', ') 
+        error: result.errors.join(', ') 
       };
     }
+  } catch (error) {
     return { 
       success: false, 
       error: 'Validation error' 
@@ -160,7 +102,7 @@ export function safeValidate<T>(schema: z.ZodSchema<T>, data: unknown): { succes
 }
 
 // API response wrapper
-export function createSecureResponse<T>(data: T, message?: string) {
+export function createSecureResponse(data: any, message?: string) {
   return {
     success: true,
     data,

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateCSRFToken, verifyCSRFToken } from './auth-security';
+import crypto from 'crypto';
+
+// CSRF token oluşturma
+export function generateCSRFToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
 
 // CSRF token'ı cookie'de saklama
 export function setCSRFToken(response: NextResponse): string {
@@ -8,7 +13,7 @@ export function setCSRFToken(response: NextResponse): string {
   response.cookies.set('csrf-token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 60 * 60 * 24 // 24 saat
   });
   
@@ -29,7 +34,8 @@ export function validateCSRFToken(request: NextRequest): boolean {
     return false;
   }
   
-  return verifyCSRFToken(headerToken, cookieToken);
+  // Basit token karşılaştırması
+  return cookieToken === headerToken;
 }
 
 // CSRF middleware
@@ -55,23 +61,6 @@ export function csrfMiddleware(handler: Function) {
 // CSRF token'ı response'a ekleme
 export function addCSRFTokenToResponse(response: NextResponse, token: string): void {
   response.headers.set('x-csrf-token', token);
-}
-
-// Güvenli form oluşturma helper'ı
-export function createSecureFormData(data: any, csrfToken: string): FormData {
-  const formData = new FormData();
-  
-  // CSRF token ekle
-  formData.append('_csrf', csrfToken);
-  
-  // Diğer verileri ekle
-  Object.keys(data).forEach(key => {
-    if (data[key] !== null && data[key] !== undefined) {
-      formData.append(key, String(data[key]));
-    }
-  });
-  
-  return formData;
 }
 
 // API endpoint'ler için CSRF koruması
@@ -103,56 +92,4 @@ export function withCSRFProtection(handler: Function) {
       );
     }
   };
-}
-
-// Client-side CSRF token alma
-export function getCSRFTokenFromClient(): string | null {
-  if (typeof window === 'undefined') return null;
-  
-  const cookies = document.cookie.split(';');
-  const csrfCookie = cookies.find(cookie => 
-    cookie.trim().startsWith('csrf-token=')
-  );
-  
-  return csrfCookie ? csrfCookie.split('=')[1] : null;
-}
-
-// Client-side güvenli fetch
-export async function secureFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const csrfToken = getCSRFTokenFromClient();
-  
-  if (!csrfToken) {
-    throw new Error('CSRF token not found');
-  }
-  
-  const secureOptions: RequestInit = {
-    ...options,
-    headers: {
-      ...options.headers,
-      'x-csrf-token': csrfToken,
-      'Content-Type': 'application/json'
-    }
-  };
-  
-  return fetch(url, secureOptions);
-}
-
-// CSRF token yenileme
-export async function refreshCSRFToken(): Promise<string | null> {
-  try {
-    const response = await fetch('/api/csrf-token', {
-      method: 'GET',
-      credentials: 'include'
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      return data.token;
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('CSRF token refresh error:', error);
-    return null;
-  }
 }

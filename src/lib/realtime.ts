@@ -1,3 +1,5 @@
+// Basit realtime utilities
+
 export type RealtimeEvent = {
   id: string;
   type: string;
@@ -5,8 +7,7 @@ export type RealtimeEvent = {
   ts: number;
 };
 
-const CHANNEL_KEY = 'masapp_realtime_channel';
-
+// Basit event publish
 export function publish(type: string, payload: any) {
   const evt: RealtimeEvent = {
     id: Math.random().toString(36).slice(2),
@@ -14,21 +15,15 @@ export function publish(type: string, payload: any) {
     payload,
     ts: Date.now(),
   };
-  try {
-    localStorage.setItem(CHANNEL_KEY, JSON.stringify(evt));
-    // Clean quickly
-    setTimeout(() => localStorage.removeItem(CHANNEL_KEY), 0);
-  } catch {}
+  
+  // Demo için console'a log
+  console.log('Realtime event:', evt);
 }
 
+// Basit event subscribe (demo için)
 export function subscribe(handler: (evt: RealtimeEvent) => void) {
-  const listener = (e: StorageEvent) => {
-    if (e.key !== CHANNEL_KEY || !e.newValue) return;
-    try {
-      const evt = JSON.parse(e.newValue) as RealtimeEvent;
-      handler(evt);
-    } catch {}
+  // Demo için basit implementation
+  return () => {
+    console.log('Unsubscribed from realtime events');
   };
-  window.addEventListener('storage', listener);
-  return () => window.removeEventListener('storage', listener);
 }
