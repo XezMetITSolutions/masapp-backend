@@ -1,55 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    // Admin yetkisi kontrolü
+    // Basit token kontrolü
     const accessToken = request.cookies.get('accessToken')?.value;
     if (!accessToken) {
       return NextResponse.json({ error: 'Token bulunamadı' }, { status: 401 });
     }
 
-    const payload = verifyToken(accessToken);
-    if (!payload || payload.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
+    const body = await request.json();
+    const { action, errorIds, notes } = body;
+
+    if (!action || !errorIds || !Array.isArray(errorIds)) {
+      return NextResponse.json(
+        { error: 'Action ve errorIds gereklidir' },
+        { status: 400 }
+      );
     }
 
-    const { errorIds, action, resolution, notes } = await request.json();
-
-    if (!errorIds || !Array.isArray(errorIds) || errorIds.length === 0) {
-      return NextResponse.json({ error: 'Hata ID\'leri gereklidir' }, { status: 400 });
+    // Demo işlemler
+    let result;
+    switch (action) {
+      case 'resolve':
+        result = {
+          success: true,
+          message: `${errorIds.length} ödeme hatası çözüldü olarak işaretlendi`,
+          resolvedErrors: errorIds,
+          resolvedAt: new Date().toISOString(),
+          notes
+        };
+        break;
+      case 'mark_pending':
+        result = {
+          success: true,
+          message: `${errorIds.length} ödeme hatası beklemede olarak işaretlendi`,
+          pendingErrors: errorIds,
+          notes
+        };
+        break;
+      case 'escalate':
+        result = {
+          success: true,
+          message: `${errorIds.length} ödeme hatası yöneticiye iletildi`,
+          escalatedErrors: errorIds,
+          escalatedAt: new Date().toISOString(),
+          notes
+        };
+        break;
+      default:
+        return NextResponse.json(
+          { error: 'Geçersiz action' },
+          { status: 400 }
+        );
     }
-
-    if (!action) {
-      return NextResponse.json({ error: 'İşlem türü gereklidir' }, { status: 400 });
-    }
-
-    const validActions = ['retry', 'resolve', 'cancel', 'addNote'];
-    if (!validActions.includes(action)) {
-      return NextResponse.json({ error: 'Geçersiz işlem türü' }, { status: 400 });
-    }
-
-    // Demo: Ödeme hatası işlemi simülasyonu
-    // Gerçek uygulamada burada:
-    // 1. Hata durumunu güncelle
-    // 2. Ödeme sağlayıcısına yeniden deneme isteği gönder
-    // 3. Müşteriye bildirim gönder
-    // 4. Audit log kaydet
-    // 5. Gerekirse webhook tetikle
-
-    const result = {
-      success: true,
-      action,
-      processedCount: errorIds.length,
-      errorIds,
-      processedBy: payload.email,
-      processedAt: new Date().toISOString(),
-      resolution: resolution || null,
-      notes: notes || null
-    };
-
-    // Gerçek uygulamada burada veritabanı güncellemesi yapılacak
-    console.log('Payment error action:', result);
 
     return NextResponse.json(result);
 

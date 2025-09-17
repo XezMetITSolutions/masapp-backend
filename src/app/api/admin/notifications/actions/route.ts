@@ -1,53 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    // Admin yetkisi kontrolü
+    // Basit token kontrolü
     const accessToken = request.cookies.get('accessToken')?.value;
     if (!accessToken) {
       return NextResponse.json({ error: 'Token bulunamadı' }, { status: 401 });
     }
 
-    const payload = verifyToken(accessToken);
-    if (!payload || payload.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
+    const body = await request.json();
+    const { action, notificationIds } = body;
+
+    if (!action || !notificationIds || !Array.isArray(notificationIds)) {
+      return NextResponse.json(
+        { error: 'Action ve notificationIds gereklidir' },
+        { status: 400 }
+      );
     }
 
-    const { notificationIds, action, data } = await request.json();
-
-    if (!notificationIds || !Array.isArray(notificationIds) || notificationIds.length === 0) {
-      return NextResponse.json({ error: 'Bildirim ID\'leri gereklidir' }, { status: 400 });
+    // Demo işlemler
+    let result;
+    switch (action) {
+      case 'mark_as_read':
+        result = {
+          success: true,
+          message: `${notificationIds.length} bildirim okundu olarak işaretlendi`,
+          updatedNotifications: notificationIds
+        };
+        break;
+      case 'mark_as_unread':
+        result = {
+          success: true,
+          message: `${notificationIds.length} bildirim okunmadı olarak işaretlendi`,
+          updatedNotifications: notificationIds
+        };
+        break;
+      case 'delete':
+        result = {
+          success: true,
+          message: `${notificationIds.length} bildirim silindi`,
+          deletedNotifications: notificationIds
+        };
+        break;
+      default:
+        return NextResponse.json(
+          { error: 'Geçersiz action' },
+          { status: 400 }
+        );
     }
-
-    if (!action) {
-      return NextResponse.json({ error: 'İşlem türü gereklidir' }, { status: 400 });
-    }
-
-    const validActions = ['markRead', 'markUnread', 'resend', 'delete', 'cancel'];
-    if (!validActions.includes(action)) {
-      return NextResponse.json({ error: 'Geçersiz işlem türü' }, { status: 400 });
-    }
-
-    // Demo: Bildirim işlemi simülasyonu
-    // Gerçek uygulamada burada:
-    // 1. Bildirim durumu güncellenir
-    // 2. Yeniden gönderim için kuyruğa eklenir
-    // 3. Silme işlemi gerçekleştirilir
-    // 4. Audit log kaydedilir
-
-    const result = {
-      success: true,
-      action,
-      processedCount: notificationIds.length,
-      notificationIds,
-      processedBy: payload.email,
-      processedAt: new Date().toISOString(),
-      data: data || null
-    };
-
-    // Gerçek uygulamada burada veritabanı güncellemesi yapılacak
-    console.log('Notification action:', result);
 
     return NextResponse.json(result);
 

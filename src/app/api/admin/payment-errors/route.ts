@@ -1,55 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    // Admin yetkisi kontrolü
+    // Basit token kontrolü
     const accessToken = request.cookies.get('accessToken')?.value;
     if (!accessToken) {
       return NextResponse.json({ error: 'Token bulunamadı' }, { status: 401 });
     }
 
-    const payload = verifyToken(accessToken);
-    if (!payload || payload.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const errorType = searchParams.get('errorType');
+    const status = searchParams.get('status') || 'all';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    // Demo: Ödeme hataları listesi
-    // Gerçek uygulamada burada veritabanı sorgusu yapılacak
+    // Demo ödeme hataları
     const paymentErrors = [
       {
-        id: 'err-1',
-        subscriptionId: 'sub-2',
+        id: '1',
+        restaurantId: 'rest-1',
+        restaurantName: 'Pizza Palace',
+        errorType: 'insufficient_funds',
+        errorMessage: 'Yetersiz bakiye',
+        amount: 150.50,
+        timestamp: new Date().toISOString(),
+        status: 'pending',
+        resolvedAt: null
+      },
+      {
+        id: '2',
         restaurantId: 'rest-2',
         restaurantName: 'Burger King',
-        owner: 'Mehmet Demir',
-        email: 'mehmet@burgerking.com',
-        plan: 'Pro',
-        amount: 3490,
-        errorCode: 'card_declined',
-        errorMessage: 'Kart reddedildi - Yetersiz bakiye',
-        errorType: 'insufficient_funds',
-        status: 'pending',
-        attemptCount: 3,
-        lastAttempt: '2024-03-03T14:20:00Z',
-        nextRetry: '2024-03-05T10:00:00Z'
+        errorType: 'card_declined',
+        errorMessage: 'Kart reddedildi',
+        amount: 89.75,
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        status: 'resolved',
+        resolvedAt: new Date(Date.now() - 1800000).toISOString()
       },
-      // ... diğer hatalar
+      {
+        id: '3',
+        restaurantId: 'rest-3',
+        restaurantName: 'Sushi Master',
+        errorType: 'network_error',
+        errorMessage: 'Ağ bağlantı hatası',
+        amount: 234.25,
+        timestamp: new Date(Date.now() - 7200000).toISOString(),
+        status: 'pending',
+        resolvedAt: null
+      }
     ];
 
     // Filtreleme
     let filteredErrors = paymentErrors;
-    if (status && status !== 'all') {
-      filteredErrors = filteredErrors.filter(e => e.status === status);
-    }
-    if (errorType && errorType !== 'all') {
-      filteredErrors = filteredErrors.filter(e => e.errorType === errorType);
+    if (status !== 'all') {
+      filteredErrors = paymentErrors.filter(error => error.status === status);
     }
 
     // Sayfalama
@@ -59,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: paginatedErrors,
+      errors: paginatedErrors,
       pagination: {
         page,
         limit,
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Payment errors list error:', error);
+    console.error('Payment errors error:', error);
     return NextResponse.json(
       { error: 'Sunucu hatası' },
       { status: 500 }

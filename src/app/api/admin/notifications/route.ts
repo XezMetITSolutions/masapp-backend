@@ -1,79 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    // Admin yetkisi kontrolü
+    // Basit token kontrolü
     const accessToken = request.cookies.get('accessToken')?.value;
     if (!accessToken) {
       return NextResponse.json({ error: 'Token bulunamadı' }, { status: 401 });
     }
 
-    const payload = verifyToken(accessToken);
-    if (!payload || payload.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type');
-    const status = searchParams.get('status');
-    const priority = searchParams.get('priority');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const type = searchParams.get('type') || 'all';
+    const status = searchParams.get('status') || 'all';
 
-    // Demo: Bildirim listesi
-    // Gerçek uygulamada burada veritabanı sorgusu yapılacak
+    // Demo bildirimler
     const notifications = [
       {
-        id: 'notif-1',
-        type: 'warning',
-        priority: 'high',
+        id: '1',
+        type: 'payment_error',
         title: 'Ödeme Hatası',
-        message: 'Pizza Palace işletmesinde ödeme hatası oluştu. Lütfen kontrol edin.',
-        recipient: {
-          type: 'admin',
-          name: 'Admin Panel'
-        },
-        channel: 'in_app',
-        status: 'read',
-        sentAt: '2024-03-15T10:30:00Z',
-        readAt: '2024-03-15T10:35:00Z',
-        createdAt: '2024-03-15T10:30:00Z',
-        createdBy: 'System'
+        message: 'Restaurant "Pizza Palace" ödeme işleminde hata yaşadı',
+        timestamp: new Date().toISOString(),
+        status: 'unread',
+        restaurantId: 'rest-1',
+        restaurantName: 'Pizza Palace'
       },
-      // ... diğer bildirimler
+      {
+        id: '2',
+        type: 'new_restaurant',
+        title: 'Yeni Restaurant',
+        message: 'Yeni restaurant kaydı: "Burger King"',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        status: 'read',
+        restaurantId: 'rest-2',
+        restaurantName: 'Burger King'
+      },
+      {
+        id: '3',
+        type: 'system_alert',
+        title: 'Sistem Uyarısı',
+        message: 'Sunucu yükü yüksek seviyelerde',
+        timestamp: new Date(Date.now() - 7200000).toISOString(),
+        status: 'unread'
+      }
     ];
-
-    // Filtreleme
-    let filteredNotifications = notifications;
-    if (type && type !== 'all') {
-      filteredNotifications = filteredNotifications.filter(n => n.type === type);
-    }
-    if (status && status !== 'all') {
-      filteredNotifications = filteredNotifications.filter(n => n.status === status);
-    }
-    if (priority && priority !== 'all') {
-      filteredNotifications = filteredNotifications.filter(n => n.priority === priority);
-    }
-
-    // Sayfalama
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
 
     return NextResponse.json({
       success: true,
-      data: paginatedNotifications,
-      pagination: {
-        page,
-        limit,
-        total: filteredNotifications.length,
-        totalPages: Math.ceil(filteredNotifications.length / limit)
-      }
+      notifications,
+      total: notifications.length
     });
 
   } catch (error) {
-    console.error('Notifications list error:', error);
+    console.error('Notifications error:', error);
     return NextResponse.json(
       { error: 'Sunucu hatası' },
       { status: 500 }
@@ -83,66 +61,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Admin yetkisi kontrolü
-    const accessToken = request.cookies.get('accessToken')?.value;
-    if (!accessToken) {
-      return NextResponse.json({ error: 'Token bulunamadı' }, { status: 401 });
-    }
+    const body = await request.json();
+    const { type, title, message, restaurantId } = body;
 
-    const payload = verifyToken(accessToken);
-    if (!payload || payload.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
-    }
-
-    const {
-      type,
-      priority,
-      title,
-      message,
-      recipientType,
-      recipientId,
-      recipientName,
-      channel,
-      scheduledAt,
-      immediate
-    } = await request.json();
-
-    // Validasyon
-    if (!type || !priority || !title || !message || !recipientType || !channel) {
-      return NextResponse.json({ error: 'Gerekli alanlar eksik' }, { status: 400 });
-    }
-
-    // Demo: Bildirim oluşturma
-    // Gerçek uygulamada burada:
-    // 1. Bildirim veritabanına kaydedilir
-    // 2. Zamanlanmış gönderim için job oluşturulur
-    // 3. Anında gönderim için kuyruğa eklenir
-    // 4. Alıcı listesi oluşturulur
-
+    // Yeni bildirim oluştur
     const notification = {
-      id: `notif-${Date.now()}`,
+      id: Date.now().toString(),
       type,
-      priority,
       title,
       message,
-      recipient: {
-        type: recipientType,
-        id: recipientId || null,
-        name: recipientName || 'Tüm Kullanıcılar'
-      },
-      channel,
-      status: immediate ? 'pending' : 'scheduled',
-      scheduledAt: immediate ? null : scheduledAt,
-      createdAt: new Date().toISOString(),
-      createdBy: payload.email
+      timestamp: new Date().toISOString(),
+      status: 'unread',
+      restaurantId
     };
-
-    console.log('Notification created:', notification);
 
     return NextResponse.json({
       success: true,
-      data: notification,
-      message: 'Bildirim başarıyla oluşturuldu'
+      notification
     });
 
   } catch (error) {
