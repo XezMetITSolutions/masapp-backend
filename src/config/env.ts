@@ -20,3 +20,4 @@ export function validateEnv() {
 
 // Initialize environment validation
 validateEnv();
+
