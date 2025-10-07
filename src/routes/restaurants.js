@@ -29,24 +29,7 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Get restaurants error:', error);
     
-    // Fallback: return demo data if database is not available
-    if (error.name === 'SequelizeConnectionRefusedError') {
-      return res.json({
-        success: true,
-        data: [
-          {
-            id: 'demo-restaurant-1',
-            name: 'Kardeşler Lokantası',
-            username: 'kardesler',
-            email: 'info@kardesler.com',
-            features: ['qr_menu', 'table_management', 'basic_reports', 'advanced_analytics'],
-            categories: [],
-            menuItems: []
-          }
-        ],
-        fallback: true
-      });
-    }
+    // No fallback data - return actual database results only
     
     res.status(500).json({
       success: false,
@@ -91,30 +74,7 @@ router.get('/username/:username', async (req, res) => {
   } catch (error) {
     console.error('Get restaurant by username error:', error);
     
-    // Fallback: return demo data if database is not available
-    if (error.name === 'SequelizeConnectionRefusedError') {
-      const { username } = req.params;
-      if (username === 'kardesler') {
-        return res.json({
-          success: true,
-          data: {
-            id: 'demo-restaurant-1',
-            name: 'Kardeşler Lokantası',
-            username: 'kardesler',
-            email: 'info@kardesler.com',
-            features: ['qr_menu', 'table_management', 'basic_reports', 'advanced_analytics'],
-            categories: [],
-            menuItems: []
-          },
-          fallback: true
-        });
-      }
-      
-      return res.status(404).json({
-        success: false,
-        message: 'Restaurant not found'
-      });
-    }
+    // No fallback data - return actual database results only
     
     res.status(500).json({
       success: false,
@@ -275,14 +235,16 @@ router.put('/:id/features', async (req, res) => {
         message: 'Restaurant not found'
       });
     }
+    
     await restaurant.update({ features });
     
     res.json({
       success: true,
-      data: restaurant,
-      message: 'Restaurant features updated successfully'
+      data: {
+        id: restaurant.id,
+        features: restaurant.features
+      }
     });
-    
   } catch (error) {
     console.error('Update restaurant features error:', error);
     res.status(500).json({
@@ -292,34 +254,6 @@ router.put('/:id/features', async (req, res) => {
   }
 });
 
-// DELETE /api/restaurants/:id - Delete restaurant
-router.delete('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const restaurant = await Restaurant.findByPk(id);
-    
-    if (!restaurant) {
-      return res.status(404).json({
-        success: false,
-        message: 'Restaurant not found'
-      });
-    }
-    
-    await restaurant.destroy();
-    
-    res.json({
-      success: true,
-      message: 'Restaurant deleted successfully'
-    });
-    
-  } catch (error) {
-    console.error('Delete restaurant error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
 module.exports = router;
+
+
