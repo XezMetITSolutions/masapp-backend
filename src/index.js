@@ -4,6 +4,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+// Database connection
+const { connectDB } = require('./models');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -60,10 +63,26 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-});
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Connect to PostgreSQL
+    await connectDB();
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`🚀 Backend server running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🗄️  Database: PostgreSQL connected`);
+      console.log(`🌐 API Base: http://localhost:${PORT}/api`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app;
 
