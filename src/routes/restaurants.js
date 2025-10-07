@@ -275,16 +275,14 @@ router.put('/:id/features', async (req, res) => {
         message: 'Restaurant not found'
       });
     }
-    
     await restaurant.update({ features });
     
     res.json({
       success: true,
-      data: {
-        id: restaurant.id,
-        features: restaurant.features
-      }
+      data: restaurant,
+      message: 'Restaurant features updated successfully'
     });
+    
   } catch (error) {
     console.error('Update restaurant features error:', error);
     res.status(500).json({
@@ -294,6 +292,34 @@ router.put('/:id/features', async (req, res) => {
   }
 });
 
+// DELETE /api/restaurants/:id - Delete restaurant
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const restaurant = await Restaurant.findByPk(id);
+    
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Restaurant not found'
+      });
+    }
+    
+    await restaurant.destroy();
+    
+    res.json({
+      success: true,
+      message: 'Restaurant deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('Delete restaurant error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
 module.exports = router;
-
-
