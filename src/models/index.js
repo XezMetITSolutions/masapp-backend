@@ -5,6 +5,12 @@ require('dotenv').config();
 const sequelize = new Sequelize(process.env.DATABASE_URL || 'postgresql://localhost:5432/masapp', {
   dialect: 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  dialectOptions: {
+    ssl: process.env.NODE_ENV === 'production' ? {
+      require: true,
+      rejectUnauthorized: false
+    } : false
+  },
   pool: {
     max: 5,
     min: 0,
@@ -50,10 +56,21 @@ const connectDB = async () => {
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: true });
       console.log('✅ Database models synchronized.');
+    } else {
+      // Production: only sync if tables don't exist
+      await sequelize.sync();
+      console.log('✅ Database models checked.');
     }
   } catch (error) {
     console.error('❌ Unable to connect to PostgreSQL:', error);
-    process.exit(1);
+    
+    // In production, don't exit - let Render handle retries
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️  Retrying database connection...');
+      setTimeout(connectDB, 5000); // Retry after 5 seconds
+    } else {
+      process.exit(1);
+    }
   }
 };
 

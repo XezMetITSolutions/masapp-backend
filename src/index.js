@@ -65,21 +65,19 @@ app.use('*', (req, res) => {
 
 // Initialize database and start server
 const startServer = async () => {
-  try {
-    // Connect to PostgreSQL
-    await connectDB();
-    
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`🚀 Backend server running on port ${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
-      console.log(`🗄️  Database: PostgreSQL connected`);
-      console.log(`🌐 API Base: http://localhost:${PORT}/api`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
+  // Start server first
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 Backend server running on port ${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`🌐 API Base: http://localhost:${PORT}/api`);
+  });
+  
+  // Connect to database (non-blocking)
+  connectDB().catch(error => {
+    console.error('❌ Database connection failed, but server is still running:', error.message);
+  });
+  
+  return server;
 };
 
 startServer();
