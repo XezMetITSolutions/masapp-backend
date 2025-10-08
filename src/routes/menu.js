@@ -106,7 +106,7 @@ router.get('/:restaurantId/menu/categories', async (req, res) => {
 router.post('/:restaurantId/menu/categories', async (req, res) => {
   try {
     const { restaurantId } = req.params;
-    const { name, description, displayOrder, isActive } = req.body;
+    const { name, description, order, isActive } = req.body;
     
     // Verify restaurant exists
     const restaurant = await Restaurant.findByPk(restaurantId);
@@ -117,18 +117,30 @@ router.post('/:restaurantId/menu/categories', async (req, res) => {
       });
     }
     
-    if (!name) {
+    // Handle both simple string and object format for name
+    let categoryName = name;
+    if (typeof name === 'object' && name.tr) {
+      categoryName = name.tr; // Use Turkish name if object format
+    }
+    
+    if (!categoryName) {
       return res.status(400).json({
         success: false,
         message: 'Category name is required'
       });
     }
     
+    // Handle description
+    let categoryDescription = description;
+    if (typeof description === 'object' && description.tr) {
+      categoryDescription = description.tr;
+    }
+    
     const category = await MenuCategory.create({
       restaurantId,
-      name,
-      description,
-      displayOrder: displayOrder || 0,
+      name: categoryName,
+      description: categoryDescription || null,
+      displayOrder: order || 0,
       isActive: isActive !== undefined ? isActive : true
     });
     
@@ -150,7 +162,7 @@ router.post('/:restaurantId/menu/categories', async (req, res) => {
 router.put('/:restaurantId/menu/categories/:categoryId', async (req, res) => {
   try {
     const { restaurantId, categoryId } = req.params;
-    const { name, description, displayOrder, isActive } = req.body;
+    const { name, description, order, isActive } = req.body;
     
     const category = await MenuCategory.findOne({
       where: { id: categoryId, restaurantId }
@@ -163,10 +175,22 @@ router.put('/:restaurantId/menu/categories/:categoryId', async (req, res) => {
       });
     }
     
+    // Handle both simple string and object format for name
+    let categoryName = category.name;
+    if (name) {
+      categoryName = typeof name === 'object' && name.tr ? name.tr : name;
+    }
+    
+    // Handle description
+    let categoryDescription = category.description;
+    if (description !== undefined) {
+      categoryDescription = typeof description === 'object' && description.tr ? description.tr : description;
+    }
+    
     await category.update({
-      name: name || category.name,
-      description: description !== undefined ? description : category.description,
-      displayOrder: displayOrder !== undefined ? displayOrder : category.displayOrder,
+      name: categoryName,
+      description: categoryDescription,
+      displayOrder: order !== undefined ? order : category.displayOrder,
       isActive: isActive !== undefined ? isActive : category.isActive
     });
     
@@ -275,9 +299,12 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       allergens, 
       ingredients, 
       nutritionInfo,
-      displayOrder,
+      order,
       isActive,
-      isAvailable 
+      isAvailable,
+      isPopular,
+      preparationTime,
+      calories
     } = req.body;
     
     // Verify category belongs to restaurant
@@ -292,22 +319,37 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       });
     }
     
-    if (!name || price === undefined) {
+    // Handle both simple string and object format for name
+    let itemName = name;
+    if (typeof name === 'object' && name.tr) {
+      itemName = name.tr;
+    }
+    
+    if (!itemName || price === undefined) {
       return res.status(400).json({
         success: false,
         message: 'Name and price are required'
       });
     }
     
+    // Handle description
+    let itemDescription = description;
+    if (typeof description === 'object' && description.tr) {
+      itemDescription = description.tr;
+    }
+    
     const item = await MenuItem.create({
       restaurantId,
       categoryId,
-      name,
-      description,
+      name: itemName,
+      description: itemDescription || null,
       price: parseFloat(price),
-      imageUrl: image,
-      displayOrder: displayOrder || 0,
-      isAvailable: isAvailable !== undefined ? isAvailable : true
+      imageUrl: image || null,
+      displayOrder: order || 0,
+      isAvailable: isAvailable !== undefined ? isAvailable : true,
+      isPopular: isPopular || false,
+      preparationTime: preparationTime || null,
+      calories: calories || null
     });
     
     res.status(201).json({
