@@ -46,10 +46,11 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
+// Rate limiting - GEVŞEK (Development için)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 1000, // 1 dakikada 1000 istek (çok gevşek)
+  message: 'Çok fazla istek gönderdiniz, lütfen biraz bekleyin'
 });
 app.use(limiter);
 
