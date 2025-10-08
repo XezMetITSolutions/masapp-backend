@@ -2,6 +2,52 @@ const express = require('express');
 const router = express.Router();
 const { Restaurant, MenuCategory, MenuItem } = require('../models');
 
+// GET /api/restaurants/:restaurantId/menu - Get complete menu (categories + items)
+router.get('/:restaurantId/menu', async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+    
+    // Verify restaurant exists
+    const restaurant = await Restaurant.findByPk(restaurantId);
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Restaurant not found'
+      });
+    }
+    
+    const categories = await MenuCategory.findAll({
+      where: { restaurantId },
+      include: [
+        {
+          model: MenuItem,
+          as: 'items',
+          required: false
+        }
+      ],
+      order: [['displayOrder', 'ASC'], [{ model: MenuItem, as: 'items' }, 'displayOrder', 'ASC']]
+    });
+    
+    // Flatten items from all categories
+    const items = categories.flatMap(cat => cat.items || []);
+    
+    res.json({
+      success: true,
+      data: {
+        categories,
+        items
+      }
+    });
+    
+  } catch (error) {
+    console.error('Get menu error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
 // GET /api/restaurants/:restaurantId/menu/categories - Get all categories for a restaurant
 router.get('/:restaurantId/menu/categories', async (req, res) => {
   try {
