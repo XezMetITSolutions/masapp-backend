@@ -25,7 +25,7 @@ router.get('/:restaurantId/menu/categories', async (req, res) => {
           required: false
         }
       ],
-      order: [['order', 'ASC'], [{ model: MenuItem, as: 'items' }, 'order', 'ASC']]
+      order: [['displayOrder', 'ASC'], [{ model: MenuItem, as: 'items' }, 'displayOrder', 'ASC']]
     });
     
     res.json({
@@ -46,7 +46,7 @@ router.get('/:restaurantId/menu/categories', async (req, res) => {
 router.post('/:restaurantId/menu/categories', async (req, res) => {
   try {
     const { restaurantId } = req.params;
-    const { name, description, order, isActive } = req.body;
+    const { name, description, displayOrder, isActive } = req.body;
     
     // Verify restaurant exists
     const restaurant = await Restaurant.findByPk(restaurantId);
@@ -68,7 +68,7 @@ router.post('/:restaurantId/menu/categories', async (req, res) => {
       restaurantId,
       name,
       description,
-      order: order || 0,
+      displayOrder: displayOrder || 0,
       isActive: isActive !== undefined ? isActive : true
     });
     
@@ -90,7 +90,7 @@ router.post('/:restaurantId/menu/categories', async (req, res) => {
 router.put('/:restaurantId/menu/categories/:categoryId', async (req, res) => {
   try {
     const { restaurantId, categoryId } = req.params;
-    const { name, description, order, isActive } = req.body;
+    const { name, description, displayOrder, isActive } = req.body;
     
     const category = await MenuCategory.findOne({
       where: { id: categoryId, restaurantId }
@@ -106,7 +106,7 @@ router.put('/:restaurantId/menu/categories/:categoryId', async (req, res) => {
     await category.update({
       name: name || category.name,
       description: description !== undefined ? description : category.description,
-      order: order !== undefined ? order : category.order,
+      displayOrder: displayOrder !== undefined ? displayOrder : category.displayOrder,
       isActive: isActive !== undefined ? isActive : category.isActive
     });
     
@@ -185,7 +185,7 @@ router.get('/:restaurantId/menu/items', async (req, res) => {
           attributes: ['id', 'name']
         }
       ],
-      order: [['order', 'ASC']]
+      order: [['displayOrder', 'ASC']]
     });
     
     res.json({
@@ -215,7 +215,7 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       allergens, 
       ingredients, 
       nutritionInfo,
-      order,
+      displayOrder,
       isActive,
       isAvailable 
     } = req.body;
@@ -248,7 +248,7 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       allergens: allergens || [],
       ingredients: ingredients || [],
       nutritionInfo: nutritionInfo || {},
-      order: order || 0,
+      displayOrder: displayOrder || 0,
       isActive: isActive !== undefined ? isActive : true,
       isAvailable: isAvailable !== undefined ? isAvailable : true
     });
