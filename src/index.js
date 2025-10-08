@@ -104,9 +104,22 @@ const startServer = async () => {
   });
   
   // Connect to database (non-blocking)
-  connectDB().catch(error => {
-    console.error('❌ Database connection failed, but server is still running:', error.message);
-  });
+  connectDB()
+    .then(async () => {
+      console.log('✅ Database connected successfully');
+      
+      // Auto-sync models with database (adds missing columns)
+      const { sequelize } = require('./models');
+      try {
+        await sequelize.sync({ alter: true });
+        console.log('✅ Database models synced successfully');
+      } catch (syncError) {
+        console.error('⚠️ Database sync warning:', syncError.message);
+      }
+    })
+    .catch(error => {
+      console.error('❌ Database connection failed, but server is still running:', error.message);
+    });
   
   return server;
 };
