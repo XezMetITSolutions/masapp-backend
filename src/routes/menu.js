@@ -240,16 +240,13 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
     }
     
     const item = await MenuItem.create({
+      restaurantId,
       categoryId,
       name,
       description,
       price: parseFloat(price),
-      image,
-      allergens: allergens || [],
-      ingredients: ingredients || [],
-      nutritionInfo: nutritionInfo || {},
+      imageUrl: image,
       displayOrder: displayOrder || 0,
-      isActive: isActive !== undefined ? isActive : true,
       isAvailable: isAvailable !== undefined ? isAvailable : true
     });
     
