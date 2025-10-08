@@ -47,6 +47,20 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: true,
       field: 'is_available'
     },
+    isPopular: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: 'is_popular'
+    },
+    preparationTime: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'preparation_time'
+    },
+    calories: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     displayOrder: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

@@ -140,7 +140,7 @@ router.post('/:restaurantId/menu/categories', async (req, res) => {
       restaurantId,
       name: categoryName,
       description: categoryDescription || null,
-      displayOrder: order || 0,
+      displayOrder: order !== undefined ? order : 0,
       isActive: isActive !== undefined ? isActive : true
     });
     
