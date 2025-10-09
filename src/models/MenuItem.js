@@ -61,6 +61,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    ingredients: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Comma-separated list of ingredients'
+    },
+    allergens: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+      comment: 'Array of allergens: gluten, dairy, eggs, nuts, peanuts, soy, fish, shellfish'
+    },
+    portionSize: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      field: 'portion_size',
+      comment: 'e.g., "250g", "1 portion", "Large"'
+    },
     displayOrder: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
