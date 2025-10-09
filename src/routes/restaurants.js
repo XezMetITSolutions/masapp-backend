@@ -56,6 +56,10 @@ router.get('/username/:username', async (req, res) => {
               as: 'items'
             }
           ]
+        },
+        {
+          model: MenuItem,
+          as: 'menuItems'
         }
       ]
     });
