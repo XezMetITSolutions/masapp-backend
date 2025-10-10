@@ -485,33 +485,4 @@ router.delete('/:restaurantId/menu/items/:itemId', async (req, res) => {
   }
 });
 
-// Test endpoint for debug page
-router.post('/test-image', async (req, res) => {
-  try {
-    const { image, testData } = req.body;
-    
-    console.log('Test image endpoint called:', {
-      imageLength: image?.length || 0,
-      testData: testData
-    });
-    
-    res.json({
-      success: true,
-      message: 'Test endpoint working',
-      receivedData: {
-        imageLength: image?.length || 0,
-        imageType: image?.substring(0, 50) + '...',
-        testData: testData
-      }
-    });
-  } catch (error) {
-    console.error('Test endpoint error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Test endpoint error',
-      error: error.message
-    });
-  }
-});
-
 module.exports = router;

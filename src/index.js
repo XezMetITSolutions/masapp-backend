@@ -78,6 +78,35 @@ app.use('/api/restaurants', require('./routes/restaurants'));
 app.use('/api/restaurants', require('./routes/menu')); // Menu routes nested under restaurants
 app.use('/api/orders', require('./routes/orders'));
 
+// Test endpoint for debug page
+app.post('/api/test-image', async (req, res) => {
+  try {
+    const { image, testData } = req.body;
+    
+    console.log('Test image endpoint called:', {
+      imageLength: image?.length || 0,
+      testData: testData
+    });
+    
+    res.json({
+      success: true,
+      message: 'Test endpoint working',
+      receivedData: {
+        imageLength: image?.length || 0,
+        imageType: image?.substring(0, 50) + '...',
+        testData: testData
+      }
+    });
+  } catch (error) {
+    console.error('Test endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Test endpoint error',
+      error: error.message
+    });
+  }
+});
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
