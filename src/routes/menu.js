@@ -295,7 +295,7 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       name, 
       description, 
       price, 
-      image, 
+      imageUrl, 
       allergens, 
       ingredients, 
       nutritionInfo,
@@ -304,7 +304,9 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       isAvailable,
       isPopular,
       preparationTime,
-      calories
+      calories,
+      subcategory,
+      portion
     } = req.body;
     
     // Verify category belongs to restaurant
@@ -349,7 +351,11 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       isPopular: isPopular || false,
       preparationTime: preparationTime || null,
-      calories: calories || null
+      calories: calories || null,
+      subcategory: subcategory || null,
+      ingredients: ingredients || null,
+      allergens: allergens || [],
+      portion: portion || null
     });
     
     res.status(201).json({
