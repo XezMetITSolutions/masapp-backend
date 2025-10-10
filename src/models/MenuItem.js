@@ -82,6 +82,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       field: 'display_order'
+    },
+    subcategory: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    ingredients: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    allergens: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true,
+      defaultValue: []
+    },
+    portion: {
+      type: DataTypes.STRING(50),
+      allowNull: true
     }
   }, {
     tableName: 'menu_items',
