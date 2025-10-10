@@ -366,7 +366,8 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       subcategory: subcategory || null,
       ingredients: ingredients || null,
       allergens: allergens || [],
-      portion: portion || null
+      portion: portion || null,
+      portionSize: portion || null
     });
     
     console.log('Backend - Oluşturulan item:', {
