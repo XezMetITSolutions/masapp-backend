@@ -296,6 +296,7 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       description, 
       price, 
       imageUrl, 
+      image, // Fallback için image field'ını da al
       allergens, 
       ingredients, 
       nutritionInfo,
@@ -346,7 +347,7 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       name: itemName,
       description: itemDescription || null,
       price: parseFloat(price),
-      imageUrl: image || null,
+      imageUrl: imageUrl || image || null,
       displayOrder: order || 0,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       isPopular: isPopular || false,
