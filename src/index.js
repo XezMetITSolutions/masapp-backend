@@ -107,6 +107,49 @@ app.post('/api/test-image', async (req, res) => {
   }
 });
 
+// Simple menu item test endpoint
+app.post('/api/test-menu-item', async (req, res) => {
+  try {
+    const { restaurantId, categoryId, name, price, imageUrl } = req.body;
+    
+    console.log('Test menu item endpoint called:', {
+      restaurantId,
+      categoryId,
+      name,
+      price,
+      imageUrlLength: imageUrl?.length || 0
+    });
+    
+    // Just validate the data without creating
+    if (!restaurantId || !categoryId || !name || price === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+        required: ['restaurantId', 'categoryId', 'name', 'price']
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Menu item data is valid',
+      data: {
+        restaurantId,
+        categoryId,
+        name,
+        price,
+        imageUrlLength: imageUrl?.length || 0
+      }
+    });
+  } catch (error) {
+    console.error('Test menu item endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Test menu item endpoint error',
+      error: error.message
+    });
+  }
+});
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
