@@ -383,9 +383,16 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
     
   } catch (error) {
     console.error('Create menu item error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      sql: error.sql
+    });
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
