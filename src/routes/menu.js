@@ -365,7 +365,7 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       calories: calories || null,
       subcategory: subcategory || null,
       ingredients: ingredients || null,
-      allergens: allergens || [],
+      allergens: allergens && allergens.length > 0 ? allergens : null,
       portion: portion || null,
       portionSize: portion || null
     });
