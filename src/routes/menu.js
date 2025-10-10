@@ -290,6 +290,9 @@ router.get('/:restaurantId/menu/items', async (req, res) => {
 router.post('/:restaurantId/menu/items', async (req, res) => {
   try {
     const { restaurantId } = req.params;
+    console.log('Backend - POST /menu/items çağrıldı:', { restaurantId });
+    console.log('Backend - Request body:', req.body);
+    
     const { 
       categoryId, 
       name, 
@@ -309,6 +312,9 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       subcategory,
       portion
     } = req.body;
+    
+    console.log('Backend - imageUrl uzunluğu:', imageUrl?.length || 0);
+    console.log('Backend - image uzunluğu:', image?.length || 0);
     
     // Verify category belongs to restaurant
     const category = await MenuCategory.findOne({
@@ -341,13 +347,17 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       itemDescription = description.tr;
     }
     
+    const finalImageUrl = imageUrl || image || null;
+    console.log('Backend - Final imageUrl uzunluğu:', finalImageUrl?.length || 0);
+    console.log('Backend - Final imageUrl başlangıcı:', finalImageUrl?.substring(0, 50) || 'null');
+    
     const item = await MenuItem.create({
       restaurantId,
       categoryId,
       name: itemName,
       description: itemDescription || null,
       price: parseFloat(price),
-      imageUrl: imageUrl || image || null,
+      imageUrl: finalImageUrl,
       displayOrder: order || 0,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       isPopular: isPopular || false,
@@ -357,6 +367,12 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       ingredients: ingredients || null,
       allergens: allergens || [],
       portion: portion || null
+    });
+    
+    console.log('Backend - Oluşturulan item:', {
+      id: item.id,
+      name: item.name,
+      imageUrl: item.imageUrl?.substring(0, 50) + '...'
     });
     
     res.status(201).json({
