@@ -18,7 +18,14 @@ router.post('/login', async (req, res) => {
     // Subdomain kontrolü - güvenlik açığını kapat
     const subdomain = req.headers['x-subdomain'] || req.headers['x-forwarded-host']?.split('.')[0];
     
-    console.log('🔐 Login attempt:', { username, subdomain, headers: req.headers });
+    console.log('🔐 Login attempt:', { 
+      username, 
+      subdomain, 
+      hostname: req.headers.host,
+      'x-subdomain': req.headers['x-subdomain'],
+      'x-forwarded-host': req.headers['x-forwarded-host'],
+      allHeaders: req.headers 
+    });
     
     // Restaurant'ı username ile bul
     const restaurant = await Restaurant.findOne({
