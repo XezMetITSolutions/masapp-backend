@@ -77,7 +77,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/restaurants', require('./routes/restaurants'));
 app.use('/api/restaurants', require('./routes/menu')); // Menu routes nested under restaurants
 app.use('/api/orders', require('./routes/orders'));
-app.use('/api/qr', require('./routes/qr')); // QR code management
+// app.use('/api/qr', require('./routes/qr')); // QR code management - temporarily disabled
 
 // Test endpoint for debug page
 app.post('/api/test-image', async (req, res) => {
