@@ -58,14 +58,8 @@ const connectDB = async () => {
     console.log('✅ PostgreSQL connection established successfully.');
     
     // Sync models (create tables)
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true });
-      console.log('✅ Database models synchronized.');
-    } else {
-      // Production: only sync if tables don't exist
-      await sequelize.sync();
-      console.log('✅ Database models checked.');
-    }
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database models synchronized.');
   } catch (error) {
     console.error('❌ Unable to connect to PostgreSQL:', error);
     
