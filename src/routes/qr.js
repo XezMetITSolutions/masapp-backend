@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const QRToken = require('../models/QRToken');
-const Restaurant = require('../models/Restaurant');
+const { QRToken, Restaurant } = require('../models');
 const { Op } = require('sequelize');
 
 // Helper: Generate secure token

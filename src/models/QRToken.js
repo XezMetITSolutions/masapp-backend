@@ -1,7 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-
-const QRToken = sequelize.define('QRToken', {
+module.exports = (sequelize, DataTypes) => {
+  const QRToken = sequelize.define('QRToken', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -64,13 +62,14 @@ const QRToken = sequelize.define('QRToken', {
   ]
 });
 
-// Model associations will be set up in the sync process
-QRToken.associate = (models) => {
-  QRToken.belongsTo(models.Restaurant, {
-    foreignKey: 'restaurantId',
-    as: 'Restaurant'
-  });
-};
+  // Model associations will be set up in the sync process
+  QRToken.associate = (models) => {
+    QRToken.belongsTo(models.Restaurant, {
+      foreignKey: 'restaurantId',
+      as: 'Restaurant'
+    });
+  };
 
-module.exports = QRToken;
+  return QRToken;
+};
 
