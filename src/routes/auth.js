@@ -15,6 +15,11 @@ router.post('/login', async (req, res) => {
       });
     }
     
+    // Subdomain kontrolü - güvenlik açığını kapat
+    const subdomain = req.headers['x-subdomain'] || req.headers['x-forwarded-host']?.split('.')[0];
+    
+    console.log('🔐 Login attempt:', { username, subdomain, headers: req.headers });
+    
     // Restaurant'ı username ile bul
     const restaurant = await Restaurant.findOne({
       where: { username }
@@ -24,6 +29,18 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid username or password'
+      });
+    }
+    
+    // SUBNET GÜVENLİK KONTROLÜ - Username subdomain ile eşleşmeli
+    if (subdomain && restaurant.username !== subdomain) {
+      console.log('🚨 Subdomain mismatch:', { 
+        restaurantUsername: restaurant.username, 
+        requestSubdomain: subdomain 
+      });
+      return res.status(403).json({
+        success: false,
+        message: 'Bu subdomain için yetkiniz yok. Kendi subdomain\'inizden giriş yapın.'
       });
     }
     
