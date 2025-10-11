@@ -174,6 +174,59 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET /api/restaurants/users/all - Get all restaurant users for admin
+router.get('/users/all', async (req, res) => {
+  try {
+    console.log('🔍 Getting all restaurant users...');
+    
+    // First check if Restaurant model is available
+    if (!Restaurant) {
+      throw new Error('Restaurant model not found');
+    }
+    
+    const restaurants = await Restaurant.findAll({
+      attributes: ['id', 'name', 'username', 'email', 'phone', 'createdAt', 'updatedAt'],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    console.log(`📊 Found ${restaurants.length} restaurants`);
+    
+    // Her restoranı kullanıcı olarak formatla
+    const users = restaurants.map(restaurant => ({
+      id: restaurant.id,
+      name: restaurant.name,
+      email: restaurant.email,
+      phone: restaurant.phone || '-',
+      role: 'restaurant_owner',
+      status: 'active',
+      restaurant: restaurant.name,
+      lastLogin: restaurant.updatedAt,
+      createdAt: restaurant.createdAt,
+      username: restaurant.username
+    }));
+    
+    console.log(`✅ Returning ${users.length} users`);
+    console.log('Sample user data:', users[0]);
+    
+    res.json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('❌ Get all restaurant users error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // GET /api/restaurants/:id/users - Get restaurant users
 router.get('/:id/users', async (req, res) => {
   try {
@@ -290,41 +343,6 @@ router.put('/:id/features', async (req, res) => {
     });
   } catch (error) {
     console.error('Update restaurant features error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
-// GET /api/restaurants/users/all - Get all restaurant users for admin
-router.get('/users/all', async (req, res) => {
-  try {
-    const restaurants = await Restaurant.findAll({
-      attributes: ['id', 'name', 'username', 'email', 'phone', 'createdAt', 'updatedAt'],
-      order: [['createdAt', 'DESC']]
-    });
-    
-    // Her restoranı kullanıcı olarak formatla
-    const users = restaurants.map(restaurant => ({
-      id: restaurant.id,
-      name: restaurant.name,
-      email: restaurant.email,
-      phone: restaurant.phone || '-',
-      role: 'restaurant_owner',
-      status: 'active',
-      restaurant: restaurant.name,
-      lastLogin: restaurant.updatedAt,
-      createdAt: restaurant.createdAt,
-      username: restaurant.username
-    }));
-    
-    res.json({
-      success: true,
-      data: users
-    });
-  } catch (error) {
-    console.error('Get all restaurant users error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

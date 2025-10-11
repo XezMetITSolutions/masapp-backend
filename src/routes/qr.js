@@ -1,8 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { QRToken, Restaurant } = require('../models');
 const { Op } = require('sequelize');
+
+// Safe model import with fallback
+let QRToken, Restaurant;
+try {
+  const models = require('../models');
+  QRToken = models.QRToken;
+  Restaurant = models.Restaurant;
+} catch (error) {
+  console.error('Model import error:', error);
+  // Fallback: create simple models
+  QRToken = null;
+  Restaurant = null;
+}
 
 // Helper: Generate secure token
 const generateToken = () => {
@@ -17,6 +29,13 @@ const isTokenExpired = (expiresAt) => {
 // POST /api/qr/generate - Generate QR token for a table
 router.post('/generate', async (req, res) => {
   try {
+    if (!QRToken || !Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'QR system temporarily unavailable - models not loaded'
+      });
+    }
+
     const { restaurantId, tableNumber, duration = 2 } = req.body; // duration in hours
     
     if (!restaurantId || !tableNumber) {
