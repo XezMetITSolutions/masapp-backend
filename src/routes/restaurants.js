@@ -3,41 +3,6 @@ const router = express.Router();
 const { Restaurant, MenuCategory, MenuItem } = require('../models');
 const bcrypt = require('bcryptjs');
 
-// GET /api/restaurants/users/all - Get all restaurant users for admin
-router.get('/users/all', async (req, res) => {
-  try {
-    const restaurants = await Restaurant.findAll({
-      attributes: ['id', 'name', 'username', 'email', 'phone', 'createdAt', 'updatedAt'],
-      order: [['createdAt', 'DESC']]
-    });
-    
-    // Her restoranı kullanıcı olarak formatla
-    const users = restaurants.map(restaurant => ({
-      id: restaurant.id,
-      name: restaurant.name,
-      email: restaurant.email,
-      phone: restaurant.phone || '-',
-      role: 'restaurant_owner',
-      status: 'active',
-      restaurant: restaurant.name,
-      lastLogin: restaurant.updatedAt,
-      createdAt: restaurant.createdAt,
-      username: restaurant.username
-    }));
-    
-    res.json({
-      success: true,
-      data: users
-    });
-  } catch (error) {
-    console.error('Get all restaurant users error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
 // GET /api/restaurants - List all restaurants
 router.get('/', async (req, res) => {
   try {
@@ -325,6 +290,41 @@ router.put('/:id/features', async (req, res) => {
     });
   } catch (error) {
     console.error('Update restaurant features error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// GET /api/restaurants/users/all - Get all restaurant users for admin
+router.get('/users/all', async (req, res) => {
+  try {
+    const restaurants = await Restaurant.findAll({
+      attributes: ['id', 'name', 'username', 'email', 'phone', 'createdAt', 'updatedAt'],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Her restoranı kullanıcı olarak formatla
+    const users = restaurants.map(restaurant => ({
+      id: restaurant.id,
+      name: restaurant.name,
+      email: restaurant.email,
+      phone: restaurant.phone || '-',
+      role: 'restaurant_owner',
+      status: 'active',
+      restaurant: restaurant.name,
+      lastLogin: restaurant.updatedAt,
+      createdAt: restaurant.createdAt,
+      username: restaurant.username
+    }));
+    
+    res.json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('Get all restaurant users error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
