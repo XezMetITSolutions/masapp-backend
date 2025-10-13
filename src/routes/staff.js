@@ -360,31 +360,24 @@ router.get('/all', async (req, res) => {
       });
     }
 
-    console.log('✅ Staff model loaded, testing table...');
-
-    // Önce tablo var mı kontrol et
+    // En basit kontrol: tablo/bağlantı hazır mı?
+    let count = 0;
     try {
-      const tableExists = await Staff.sequelize.query(
-        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Staffs')",
-        { type: Staff.sequelize.QueryTypes.SELECT }
-      );
-      console.log('✅ Table exists check:', tableExists);
-    } catch (tableError) {
-      console.error('❌ Table check error:', tableError);
+      count = await Staff.count();
+    } catch (err) {
+      console.error('❌ Staff.count() failed:', err.message);
+      return res.status(503).json({ success: false, message: 'Staff table not ready', error: err.message });
     }
-
-    // En basit query - sadece count
-    const count = await Staff.count();
     console.log('✅ Staff count:', count);
 
-    // Eğer count çalışıyorsa, findAll dene
-    const staff = await Staff.findAll({
-      order: [['createdAt', 'DESC']]
-    });
+    let staff = [];
+    try {
+      staff = await Staff.findAll({ order: [['createdAt', 'DESC']] });
+    } catch (err) {
+      console.error('❌ Staff.findAll() failed:', err.message);
+      return res.status(500).json({ success: false, message: 'Failed to query staff', error: err.message });
+    }
 
-    console.log('✅ Staff found:', staff.length, 'members');
-
-    // Basit format
     const simpleStaff = staff.map(member => ({
       id: member.id,
       name: member.name,
@@ -396,26 +389,10 @@ router.get('/all', async (req, res) => {
       createdAt: member.createdAt
     }));
 
-    console.log('✅ Staff data prepared');
-
-    res.json({
-      success: true,
-      data: simpleStaff,
-      count: count
-    });
+    res.json({ success: true, data: simpleStaff, count });
   } catch (error) {
     console.error('❌ Error getting all staff:', error);
-    console.error('Error details:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      sql: error.sql
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
