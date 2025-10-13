@@ -47,15 +47,6 @@ module.exports = (sequelize, DataTypes) => {
         isIn: [['waiter', 'cashier', 'chef', 'manager', 'admin']]
       }
     },
-    department: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: 'service'
-    },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
     status: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -64,24 +55,7 @@ module.exports = (sequelize, DataTypes) => {
         isIn: [['active', 'inactive', 'suspended']]
       }
     },
-    lastLogin: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    totalOrders: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0
-    },
-    rating: {
-      type: DataTypes.DECIMAL(3, 2),
-      allowNull: false,
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 5
-      }
-    }
+    
   }, {
     tableName: 'Staff',
     timestamps: true,

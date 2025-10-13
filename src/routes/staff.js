@@ -70,7 +70,7 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
     }
 
     const { restaurantId } = req.params;
-    const { name, email, phone, role, department, notes, username, password } = req.body;
+    const { name, email, phone, role, username, password } = req.body;
 
     console.log('📝 Request data:', { restaurantId, name, email, username, role });
 
@@ -121,10 +121,7 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
       password: password || null,
       phone: phone || null,
       role: role || 'waiter',
-      department: department || 'service',
-      notes: notes || null,
-      status: 'active',
-      lastLogin: null
+      status: 'active'
     });
 
     console.log('✅ Staff created successfully:', staff.id);
@@ -160,7 +157,7 @@ router.put('/:staffId', async (req, res) => {
     }
 
     const { staffId } = req.params;
-    const { name, email, phone, role, department, notes, status, username, password } = req.body;
+    const { name, email, phone, role, status, username, password } = req.body;
 
     const staff = await Staff.findByPk(staffId);
     if (!staff) {
@@ -177,8 +174,6 @@ router.put('/:staffId', async (req, res) => {
     if (password !== undefined) staff.password = password;
     if (phone !== undefined) staff.phone = phone;
     if (role) staff.role = role;
-    if (department) staff.department = department;
-    if (notes !== undefined) staff.notes = notes;
     if (status) staff.status = status;
 
     await staff.save();
@@ -292,9 +287,6 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('✅ Staff found:', staff.name, 'Role:', staff.role);
-
-    // Update last login
-    staff.lastLogin = new Date();
     await staff.save();
 
     res.json({
