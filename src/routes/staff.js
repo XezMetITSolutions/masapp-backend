@@ -65,7 +65,7 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
     }
 
     const { restaurantId } = req.params;
-    const { name, email, phone, role, department, notes } = req.body;
+    const { name, email, phone, role, department, notes, username, password } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({
@@ -102,6 +102,8 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
       restaurantId,
       name,
       email,
+      username: username || null,
+      password: password || null,
       phone: phone || null,
       role: role || 'waiter',
       department: department || 'service',
@@ -136,7 +138,7 @@ router.put('/:staffId', async (req, res) => {
     }
 
     const { staffId } = req.params;
-    const { name, email, phone, role, department, notes, status } = req.body;
+    const { name, email, phone, role, department, notes, status, username, password } = req.body;
 
     const staff = await Staff.findByPk(staffId);
     if (!staff) {
@@ -149,6 +151,8 @@ router.put('/:staffId', async (req, res) => {
     // Update fields
     if (name) staff.name = name;
     if (email) staff.email = email;
+    if (username !== undefined) staff.username = username;
+    if (password !== undefined) staff.password = password;
     if (phone !== undefined) staff.phone = phone;
     if (role) staff.role = role;
     if (department) staff.department = department;
@@ -200,6 +204,79 @@ router.delete('/:staffId', async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting staff:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// POST /api/staff/login - Staff login
+router.post('/login', async (req, res) => {
+  try {
+    if (!Staff || !Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'Staff system temporarily unavailable - models not loaded'
+      });
+    }
+
+    const { username, password, subdomain } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username and password are required'
+      });
+    }
+
+    // Find restaurant by subdomain
+    const restaurant = await Restaurant.findOne({
+      where: { username: subdomain }
+    });
+
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Restaurant not found'
+      });
+    }
+
+    // Find staff member
+    const staff = await Staff.findOne({
+      where: {
+        restaurantId: restaurant.id,
+        username: username,
+        password: password,
+        status: 'active'
+      }
+    });
+
+    if (!staff) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Update last login
+    staff.lastLogin = new Date();
+    await staff.save();
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        id: staff.id,
+        name: staff.name,
+        role: staff.role,
+        restaurantId: staff.restaurantId,
+        restaurantName: restaurant.name
+      }
+    });
+  } catch (error) {
+    console.error('Error during staff login:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
