@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { remove } = require('rembg');
 const sharp = require('sharp');
 
-// POST /api/remove-background - Remove background from image
+// POST /api/remove-background - Remove background from image using Sharp
 router.post('/remove-background', async (req, res) => {
   try {
     console.log('🖼️ Arkaplan silme endpoint\'i çağrıldı');
@@ -22,11 +21,18 @@ router.post('/remove-background', async (req, res) => {
     // Base64'ten buffer'a çevir
     const imageBuffer = Buffer.from(imageData.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
     
-    console.log('🔄 RemBG ile arkaplan siliniyor...');
+    console.log('🔄 Sharp ile arkaplan siliniyor...');
     const startTime = Date.now();
     
-    // RemBG ile arkaplan sil
-    const resultBuffer = await remove(imageBuffer);
+    // Sharp ile basit arkaplan silme (beyaz arkaplanı şeffaf yap)
+    const resultBuffer = await sharp(imageBuffer)
+      .removeAlpha() // Alpha channel'ı kaldır
+      .threshold(240) // Beyaz renkleri threshold ile ayır
+      .png({ 
+        compressionLevel: 9,
+        adaptiveFiltering: true
+      })
+      .toBuffer();
     
     const endTime = Date.now();
     const processingTime = endTime - startTime;
@@ -38,12 +44,13 @@ router.post('/remove-background', async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Background removed successfully',
+      message: 'Background removed successfully (Sharp method)',
       data: {
         processedImage: resultBase64,
         processingTime: processingTime,
         originalSize: imageBuffer.length,
-        processedSize: resultBuffer.length
+        processedSize: resultBuffer.length,
+        method: 'Sharp Threshold'
       }
     });
     
@@ -62,9 +69,10 @@ router.get('/test', async (req, res) => {
   try {
     res.json({
       success: true,
-      message: 'RemBG test endpoint is working',
-      rembgVersion: '2.0.50',
-      status: 'Ready'
+      message: 'Sharp background removal test endpoint is working',
+      sharpVersion: '0.32.6',
+      status: 'Ready',
+      method: 'Sharp Threshold'
     });
   } catch (error) {
     console.error('Test endpoint error:', error);

@@ -19,8 +19,7 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.3.1",
     "multer": "^1.4.5-lts.1",
-    "sharp": "^0.32.6",
-    "rembg": "^2.0.50"
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
