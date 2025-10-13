@@ -351,6 +351,13 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
     console.log('Backend - Final imageUrl uzunluğu:', finalImageUrl?.length || 0);
     console.log('Backend - Final imageUrl başlangıcı:', finalImageUrl?.substring(0, 50) || 'null');
     
+    console.log('Backend - Create menu item request:', {
+      name,
+      allergens: allergens,
+      allergensType: typeof allergens,
+      allergensLength: allergens?.length
+    });
+    
     const item = await MenuItem.create({
       restaurantId,
       categoryId,
@@ -365,7 +372,7 @@ router.post('/:restaurantId/menu/items', async (req, res) => {
       calories: calories || null,
       subcategory: subcategory || null,
       ingredients: ingredients || null,
-      allergens: allergens && allergens.length > 0 ? allergens : null,
+      allergens: allergens || [],
       portion: portion || null,
       portionSize: portion || null
     });
