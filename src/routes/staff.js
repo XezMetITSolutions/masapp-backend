@@ -451,4 +451,100 @@ router.get('/test', async (req, res) => {
   }
 });
 
+// POST /api/staff/restore-restaurants - Restore restaurant data
+router.post('/restore-restaurants', async (req, res) => {
+  try {
+    console.log('🔍 Restoring restaurant data...');
+    
+    if (!Restaurant) {
+      console.log('❌ Restaurant model not loaded');
+      return res.status(503).json({
+        success: false,
+        message: 'Restaurant model not loaded'
+      });
+    }
+
+    console.log('✅ Restaurant model loaded, creating restaurants...');
+
+    // Restaurant verilerini yeniden oluştur
+    const restaurants = [
+      {
+        name: 'Aksaray',
+        username: 'aksaray',
+        email: 'aksaray@aksaray.guzellestir.com',
+        phone: '+90 555 123 4567',
+        address: 'Aksaray, İstanbul',
+        description: 'Geleneksel Türk mutfağı',
+        logo: null,
+        coverImage: null,
+        status: 'active'
+      },
+      {
+        name: 'Hazal',
+        username: 'hazal',
+        email: 'hazal@hazal.com',
+        phone: '+90 555 234 5678',
+        address: 'Hazal, İstanbul',
+        description: 'Modern Türk mutfağı',
+        logo: null,
+        coverImage: null,
+        status: 'active'
+      },
+      {
+        name: 'Test Restoran',
+        username: 'testuser',
+        email: 'test@test.com',
+        phone: '+90 555 345 6789',
+        address: 'Test, İstanbul',
+        description: 'Test restoranı',
+        logo: null,
+        coverImage: null,
+        status: 'active'
+      }
+    ];
+
+    const createdRestaurants = [];
+    
+    for (const restaurantData of restaurants) {
+      try {
+        // Mevcut restaurant'ı kontrol et
+        const existingRestaurant = await Restaurant.findOne({
+          where: { username: restaurantData.username }
+        });
+
+        if (existingRestaurant) {
+          console.log(`✅ Restaurant already exists: ${restaurantData.name}`);
+          createdRestaurants.push(existingRestaurant);
+        } else {
+          const restaurant = await Restaurant.create(restaurantData);
+          console.log(`✅ Restaurant created: ${restaurant.name} (${restaurant.id})`);
+          createdRestaurants.push(restaurant);
+        }
+      } catch (error) {
+        console.error(`❌ Error creating restaurant ${restaurantData.name}:`, error);
+      }
+    }
+
+    console.log('✅ Restaurant restoration completed');
+
+    res.json({
+      success: true,
+      message: 'Restaurants restored successfully',
+      data: createdRestaurants
+    });
+  } catch (error) {
+    console.error('❌ Error restoring restaurants:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Error restoring restaurants',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;
