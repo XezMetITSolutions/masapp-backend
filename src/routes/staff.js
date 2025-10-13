@@ -296,4 +296,66 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// GET /api/staff/restaurants - List all restaurants (debug)
+router.get('/restaurants', async (req, res) => {
+  try {
+    if (!Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'Restaurant system temporarily unavailable'
+      });
+    }
+
+    const restaurants = await Restaurant.findAll({
+      attributes: ['id', 'name', 'username', 'email'],
+      order: [['name', 'ASC']]
+    });
+
+    res.json({
+      success: true,
+      data: restaurants
+    });
+  } catch (error) {
+    console.error('Error getting restaurants:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/staff/all - List all staff (debug)
+router.get('/all', async (req, res) => {
+  try {
+    if (!Staff || !Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'Staff system temporarily unavailable'
+      });
+    }
+
+    const staff = await Staff.findAll({
+      include: [{
+        model: Restaurant,
+        as: 'restaurant',
+        attributes: ['id', 'name', 'username']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      success: true,
+      data: staff
+    });
+  } catch (error) {
+    console.error('Error getting all staff:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;
