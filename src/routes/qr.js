@@ -29,7 +29,10 @@ const isTokenExpired = (expiresAt) => {
 // POST /api/qr/generate - Generate QR token for a table
 router.post('/generate', async (req, res) => {
   try {
+    console.log('🔍 QR Generate endpoint called:', req.body);
+    
     if (!QRToken || !Restaurant) {
+      console.error('❌ Models not loaded:', { QRToken: !!QRToken, Restaurant: !!Restaurant });
       return res.status(503).json({
         success: false,
         message: 'QR system temporarily unavailable - models not loaded'
@@ -38,7 +41,10 @@ router.post('/generate', async (req, res) => {
 
     const { restaurantId, tableNumber, duration = 2 } = req.body; // duration in hours
     
+    console.log('📝 Request data:', { restaurantId, tableNumber, duration });
+    
     if (!restaurantId || !tableNumber) {
+      console.error('❌ Missing required fields:', { restaurantId, tableNumber });
       return res.status(400).json({
         success: false,
         message: 'Restaurant ID and table number are required'
@@ -46,13 +52,17 @@ router.post('/generate', async (req, res) => {
     }
     
     // Verify restaurant exists
+    console.log('🔍 Checking restaurant:', restaurantId);
     const restaurant = await Restaurant.findByPk(restaurantId);
     if (!restaurant) {
+      console.error('❌ Restaurant not found:', restaurantId);
       return res.status(404).json({
         success: false,
         message: 'Restaurant not found'
       });
     }
+    
+    console.log('✅ Restaurant found:', restaurant.name);
     
     // Deactivate old tokens for this table
     await QRToken.update(

@@ -80,6 +80,41 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/qr', require('./routes/qr')); // QR code management
 app.use('/api/staff', require('./routes/staff')); // Staff management
 
+// Test endpoint for QR system
+app.get('/api/qr/test', async (req, res) => {
+  try {
+    const { QRToken, Restaurant } = require('./models');
+    
+    // Test if QRToken model is available
+    if (!QRToken) {
+      return res.status(503).json({
+        success: false,
+        message: 'QRToken model not available'
+      });
+    }
+    
+    // Test database connection
+    const count = await QRToken.count();
+    
+    res.json({
+      success: true,
+      message: 'QR system is working',
+      qrTokenCount: count,
+      models: {
+        QRToken: !!QRToken,
+        Restaurant: !!Restaurant
+      }
+    });
+  } catch (error) {
+    console.error('QR test error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'QR system error',
+      error: error.message
+    });
+  }
+});
+
 // Test endpoint for debug page
 app.post('/api/test-image', async (req, res) => {
   try {
