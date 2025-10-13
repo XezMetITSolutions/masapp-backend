@@ -223,8 +223,11 @@ router.post('/login', async (req, res) => {
     }
 
     const { username, password, subdomain } = req.body;
+    
+    console.log('🔍 Staff login attempt:', { username, subdomain });
 
     if (!username || !password) {
+      console.log('❌ Missing credentials');
       return res.status(400).json({
         success: false,
         message: 'Username and password are required'
@@ -232,18 +235,23 @@ router.post('/login', async (req, res) => {
     }
 
     // Find restaurant by subdomain
+    console.log('🔍 Looking for restaurant with subdomain:', subdomain);
     const restaurant = await Restaurant.findOne({
       where: { username: subdomain }
     });
 
     if (!restaurant) {
+      console.log('❌ Restaurant not found for subdomain:', subdomain);
       return res.status(404).json({
         success: false,
         message: 'Restaurant not found'
       });
     }
 
+    console.log('✅ Restaurant found:', restaurant.name, 'ID:', restaurant.id);
+
     // Find staff member
+    console.log('🔍 Looking for staff:', { username, restaurantId: restaurant.id });
     const staff = await Staff.findOne({
       where: {
         restaurantId: restaurant.id,
@@ -254,11 +262,14 @@ router.post('/login', async (req, res) => {
     });
 
     if (!staff) {
+      console.log('❌ Staff not found or invalid credentials');
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
+
+    console.log('✅ Staff found:', staff.name, 'Role:', staff.role);
 
     // Update last login
     staff.lastLogin = new Date();
