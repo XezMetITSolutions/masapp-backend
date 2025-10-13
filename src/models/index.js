@@ -27,6 +27,7 @@ const Order = require('./Order')(sequelize, Sequelize.DataTypes);
 const OrderItem = require('./OrderItem')(sequelize, Sequelize.DataTypes);
 const Feature = require('./Feature')(sequelize, Sequelize.DataTypes);
 const QRToken = require('./QRToken')(sequelize, Sequelize.DataTypes);
+const Staff = require('./Staff')(sequelize, Sequelize.DataTypes);
 
 // Define associations
 Restaurant.hasMany(MenuCategory, { foreignKey: 'restaurantId', as: 'categories' });
@@ -50,6 +51,10 @@ OrderItem.belongsTo(MenuItem, { foreignKey: 'menuItemId', as: 'menuItem' });
 // QR Token associations
 Restaurant.hasMany(QRToken, { foreignKey: 'restaurantId', as: 'qrTokens' });
 QRToken.belongsTo(Restaurant, { foreignKey: 'restaurantId', as: 'Restaurant' });
+
+// Staff associations
+Restaurant.hasMany(Staff, { foreignKey: 'restaurantId', as: 'staff' });
+Staff.belongsTo(Restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
 
 // Test connection
 const connectDB = async () => {
@@ -82,5 +87,6 @@ module.exports = {
   Order,
   OrderItem,
   Feature,
-  QRToken
+  QRToken,
+  Staff
 };
