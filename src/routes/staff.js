@@ -54,6 +54,8 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
   }
 });
 
+module.exports = router;
+
 // POST /api/staff/restaurant/:restaurantId - Create new staff member
 router.post('/restaurant/:restaurantId', async (req, res) => {
   try {
@@ -552,5 +554,3 @@ router.post('/restore-restaurants', async (req, res) => {
     });
   }
 });
-
-module.exports = router;
