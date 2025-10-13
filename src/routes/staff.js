@@ -348,28 +348,61 @@ router.get('/restaurants', async (req, res) => {
 // GET /api/staff/all - List all staff (debug)
 router.get('/all', async (req, res) => {
   try {
+    console.log('🔍 Getting all staff...');
+    
     if (!Staff || !Restaurant) {
+      console.log('❌ Models not loaded:', { Staff: !!Staff, Restaurant: !!Restaurant });
       return res.status(503).json({
         success: false,
         message: 'Staff system temporarily unavailable'
       });
     }
 
+    console.log('✅ Models loaded, querying staff...');
+
+    // Basit query - include olmadan
     const staff = await Staff.findAll({
-      include: [{
-        model: Restaurant,
-        as: 'restaurant',
-        attributes: ['id', 'name', 'username']
-      }],
       order: [['createdAt', 'DESC']]
     });
 
+    console.log('✅ Staff found:', staff.length, 'members');
+
+    // Restaurant bilgilerini ayrı ayrı al
+    const staffWithRestaurant = await Promise.all(
+      staff.map(async (member) => {
+        try {
+          const restaurant = await Restaurant.findByPk(member.restaurantId);
+          return {
+            ...member.toJSON(),
+            restaurant: restaurant ? {
+              id: restaurant.id,
+              name: restaurant.name,
+              username: restaurant.username
+            } : null
+          };
+        } catch (error) {
+          console.error('Error getting restaurant for staff:', member.id, error);
+          return {
+            ...member.toJSON(),
+            restaurant: null
+          };
+        }
+      })
+    );
+
+    console.log('✅ Staff with restaurant info prepared');
+
     res.json({
       success: true,
-      data: staff
+      data: staffWithRestaurant
     });
   } catch (error) {
-    console.error('Error getting all staff:', error);
+    console.error('❌ Error getting all staff:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Internal server error',
