@@ -79,7 +79,6 @@ app.use('/api/restaurants', require('./routes/menu')); // Menu routes nested und
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/qr', require('./routes/qr')); // QR code management
 app.use('/api/staff', require('./routes/staff')); // Staff management
-app.use('/api/background-removal', require('./routes/backgroundRemoval')); // Background removal
 
 // Test endpoint for QR system
 app.get('/api/qr/test', async (req, res) => {
