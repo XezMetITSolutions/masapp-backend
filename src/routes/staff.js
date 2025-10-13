@@ -354,20 +354,35 @@ router.get('/all', async (req, res) => {
       console.log('❌ Staff model not loaded');
       return res.status(503).json({
         success: false,
-        message: 'Staff system temporarily unavailable'
+        message: 'Staff model not loaded'
       });
     }
 
-    console.log('✅ Staff model loaded, querying staff...');
+    console.log('✅ Staff model loaded, testing table...');
 
-    // En basit query - sadece staff bilgileri
+    // Önce tablo var mı kontrol et
+    try {
+      const tableExists = await Staff.sequelize.query(
+        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Staffs')",
+        { type: Staff.sequelize.QueryTypes.SELECT }
+      );
+      console.log('✅ Table exists check:', tableExists);
+    } catch (tableError) {
+      console.error('❌ Table check error:', tableError);
+    }
+
+    // En basit query - sadece count
+    const count = await Staff.count();
+    console.log('✅ Staff count:', count);
+
+    // Eğer count çalışıyorsa, findAll dene
     const staff = await Staff.findAll({
       order: [['createdAt', 'DESC']]
     });
 
     console.log('✅ Staff found:', staff.length, 'members');
 
-    // Basit format - restaurant bilgisi olmadan
+    // Basit format
     const simpleStaff = staff.map(member => ({
       id: member.id,
       name: member.name,
@@ -383,14 +398,16 @@ router.get('/all', async (req, res) => {
 
     res.json({
       success: true,
-      data: simpleStaff
+      data: simpleStaff,
+      count: count
     });
   } catch (error) {
     console.error('❌ Error getting all staff:', error);
     console.error('Error details:', {
       message: error.message,
       name: error.name,
-      stack: error.stack
+      stack: error.stack,
+      sql: error.sql
     });
     res.status(500).json({
       success: false,
