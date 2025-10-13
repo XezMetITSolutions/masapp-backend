@@ -350,51 +350,40 @@ router.get('/all', async (req, res) => {
   try {
     console.log('🔍 Getting all staff...');
     
-    if (!Staff || !Restaurant) {
-      console.log('❌ Models not loaded:', { Staff: !!Staff, Restaurant: !!Restaurant });
+    if (!Staff) {
+      console.log('❌ Staff model not loaded');
       return res.status(503).json({
         success: false,
         message: 'Staff system temporarily unavailable'
       });
     }
 
-    console.log('✅ Models loaded, querying staff...');
+    console.log('✅ Staff model loaded, querying staff...');
 
-    // Basit query - include olmadan
+    // En basit query - sadece staff bilgileri
     const staff = await Staff.findAll({
       order: [['createdAt', 'DESC']]
     });
 
     console.log('✅ Staff found:', staff.length, 'members');
 
-    // Restaurant bilgilerini ayrı ayrı al
-    const staffWithRestaurant = await Promise.all(
-      staff.map(async (member) => {
-        try {
-          const restaurant = await Restaurant.findByPk(member.restaurantId);
-          return {
-            ...member.toJSON(),
-            restaurant: restaurant ? {
-              id: restaurant.id,
-              name: restaurant.name,
-              username: restaurant.username
-            } : null
-          };
-        } catch (error) {
-          console.error('Error getting restaurant for staff:', member.id, error);
-          return {
-            ...member.toJSON(),
-            restaurant: null
-          };
-        }
-      })
-    );
+    // Basit format - restaurant bilgisi olmadan
+    const simpleStaff = staff.map(member => ({
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      username: member.username,
+      role: member.role,
+      status: member.status,
+      restaurantId: member.restaurantId,
+      createdAt: member.createdAt
+    }));
 
-    console.log('✅ Staff with restaurant info prepared');
+    console.log('✅ Staff data prepared');
 
     res.json({
       success: true,
-      data: staffWithRestaurant
+      data: simpleStaff
     });
   } catch (error) {
     console.error('❌ Error getting all staff:', error);
