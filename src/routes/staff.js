@@ -411,4 +411,44 @@ router.get('/all', async (req, res) => {
   }
 });
 
+// GET /api/staff/test - Simple test endpoint
+router.get('/test', async (req, res) => {
+  try {
+    console.log('🔍 Staff test endpoint called');
+    
+    if (!Staff) {
+      console.log('❌ Staff model not loaded');
+      return res.status(503).json({
+        success: false,
+        message: 'Staff model not loaded'
+      });
+    }
+
+    console.log('✅ Staff model loaded, testing query...');
+
+    // En basit query
+    const count = await Staff.count();
+    console.log('✅ Staff count:', count);
+
+    res.json({
+      success: true,
+      message: 'Staff test successful',
+      count: count,
+      modelLoaded: !!Staff
+    });
+  } catch (error) {
+    console.error('❌ Staff test error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Staff test failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;
