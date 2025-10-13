@@ -57,7 +57,10 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
 // POST /api/staff/restaurant/:restaurantId - Create new staff member
 router.post('/restaurant/:restaurantId', async (req, res) => {
   try {
+    console.log('🔍 Staff creation request:', req.params, req.body);
+    
     if (!Staff || !Restaurant) {
+      console.log('❌ Models not loaded:', { Staff: !!Staff, Restaurant: !!Restaurant });
       return res.status(503).json({
         success: false,
         message: 'Staff system temporarily unavailable - models not loaded'
@@ -67,7 +70,10 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
     const { restaurantId } = req.params;
     const { name, email, phone, role, department, notes, username, password } = req.body;
 
+    console.log('📝 Request data:', { restaurantId, name, email, username, role });
+
     if (!name || !email) {
+      console.log('❌ Missing required fields:', { name, email });
       return res.status(400).json({
         success: false,
         message: 'Name and email are required'
@@ -75,13 +81,17 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
     }
 
     // Verify restaurant exists
+    console.log('🔍 Looking for restaurant:', restaurantId);
     const restaurant = await Restaurant.findByPk(restaurantId);
     if (!restaurant) {
+      console.log('❌ Restaurant not found:', restaurantId);
       return res.status(404).json({
         success: false,
         message: 'Restaurant not found'
       });
     }
+
+    console.log('✅ Restaurant found:', restaurant.name);
 
     // Check if email already exists for this restaurant
     const existingStaff = await Staff.findOne({
@@ -92,11 +102,14 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
     });
 
     if (existingStaff) {
+      console.log('❌ Email already exists:', email);
       return res.status(400).json({
         success: false,
         message: 'Email already exists for this restaurant'
       });
     }
+
+    console.log('✅ Email is unique, creating staff...');
 
     const staff = await Staff.create({
       restaurantId,
@@ -112,13 +125,20 @@ router.post('/restaurant/:restaurantId', async (req, res) => {
       lastLogin: null
     });
 
+    console.log('✅ Staff created successfully:', staff.id);
+
     res.status(201).json({
       success: true,
       message: 'Staff member created successfully',
       data: staff
     });
   } catch (error) {
-    console.error('Error creating staff:', error);
+    console.error('❌ Error creating staff:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Internal server error',
