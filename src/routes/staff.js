@@ -3,15 +3,19 @@ const router = express.Router();
 const { Op } = require('sequelize');
 
 // Safe model import with fallback
-let Staff, Restaurant;
+let Staff, Restaurant, MenuCategory, MenuItem;
 try {
   const models = require('../models');
   Staff = models.Staff;
   Restaurant = models.Restaurant;
+  MenuCategory = models.MenuCategory;
+  MenuItem = models.MenuItem;
 } catch (error) {
   console.error('Model import error:', error);
   Staff = null;
   Restaurant = null;
+  MenuCategory = null;
+  MenuItem = null;
 }
 
 // GET /api/staff/restaurant/:restaurantId - Get all staff for a restaurant
