@@ -248,7 +248,8 @@ router.post('/login', async (req, res) => {
 
     const { username, password, subdomain } = req.body;
     
-    console.log('🔍 Staff login attempt:', { username, subdomain });
+    console.log('🔍 Staff login attempt:', { username, subdomain, password: password ? '***' : 'missing' });
+    console.log('🔍 Request body:', req.body);
 
     if (!username || !password) {
       console.log('❌ Missing credentials');
@@ -540,5 +541,8 @@ router.post('/restore-restaurants', async (req, res) => {
       message: 'Error restoring restaurants',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+});
+
   }
 });
