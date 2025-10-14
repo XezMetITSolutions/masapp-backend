@@ -543,6 +543,3 @@ router.post('/restore-restaurants', async (req, res) => {
     });
   }
 });
-
-  }
-});
