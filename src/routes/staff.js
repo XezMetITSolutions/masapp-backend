@@ -331,6 +331,44 @@ router.delete('/:staffId', async (req, res) => {
   }
 });
 
+// GET /api/staff/list - List all staff members
+router.get('/list', async (req, res) => {
+  try {
+    if (!Staff || !Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'Staff system temporarily unavailable - models not loaded'
+      });
+    }
+
+    console.log('🔍 Listing all staff members...');
+    
+    const staffMembers = await Staff.findAll({
+      include: [{
+        model: Restaurant,
+        as: 'restaurant',
+        attributes: ['id', 'name', 'username']
+      }]
+    });
+
+    console.log('✅ Found staff members:', staffMembers.length);
+
+    res.json({
+      success: true,
+      message: 'Staff members listed successfully',
+      data: staffMembers
+    });
+
+  } catch (error) {
+    console.error('❌ Error listing staff:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error listing staff',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // POST /api/staff/login - Staff login
 router.post('/login', async (req, res) => {
   try {
