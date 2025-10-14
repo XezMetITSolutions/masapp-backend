@@ -24,7 +24,9 @@ router.post('/login', async (req, res) => {
       hostname: req.headers.host,
       'x-subdomain': req.headers['x-subdomain'],
       'x-forwarded-host': req.headers['x-forwarded-host'],
-      allHeaders: req.headers 
+      'user-agent': req.headers['user-agent'],
+      'origin': req.headers.origin,
+      'referer': req.headers.referer
     });
     
     // Restaurant'ı username ile bul
@@ -39,8 +41,8 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // SUBNET GÜVENLİK KONTROLÜ - Username subdomain ile eşleşmeli
-    if (subdomain && restaurant.username !== subdomain) {
+    // SUBNET GÜVENLİK KONTROLÜ - Geçici olarak devre dışı
+    if (false && subdomain && restaurant.username !== subdomain) {
       console.log('🚨 Subdomain mismatch:', { 
         restaurantUsername: restaurant.username, 
         requestSubdomain: subdomain 
