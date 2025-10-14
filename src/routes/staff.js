@@ -465,6 +465,7 @@ router.post('/restore-restaurants', async (req, res) => {
         name: 'Aksaray',
         username: 'aksaray',
         email: 'aksaray@aksaray.guzellestir.com',
+        password: '123456', // Password eklendi
         phone: '+90 555 123 4567',
         address: 'Aksaray, İstanbul',
         description: 'Geleneksel Türk mutfağı',
@@ -476,6 +477,7 @@ router.post('/restore-restaurants', async (req, res) => {
         name: 'Hazal',
         username: 'hazal',
         email: 'hazal@hazal.com',
+        password: '123456', // Password eklendi
         phone: '+90 555 234 5678',
         address: 'Hazal, İstanbul',
         description: 'Modern Türk mutfağı',
@@ -487,6 +489,7 @@ router.post('/restore-restaurants', async (req, res) => {
         name: 'Test Restoran',
         username: 'testuser',
         email: 'test@test.com',
+        password: '123456', // Password eklendi
         phone: '+90 555 345 6789',
         address: 'Test, İstanbul',
         description: 'Test restoranı',
