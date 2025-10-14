@@ -44,6 +44,18 @@ router.post('/login', async (req, res) => {
     
     console.log('✅ Restaurant found:', restaurant.name);
     
+    // Subdomain kontrolü - güvenlik
+    const subdomain = req.headers['x-subdomain'] || req.headers['x-forwarded-host']?.split('.')[0];
+    console.log('🔍 Subdomain check:', { subdomain, restaurantUsername: restaurant.username });
+    
+    if (subdomain && restaurant.username !== subdomain) {
+      console.log('🚨 Subdomain mismatch - security violation');
+      return res.status(403).json({
+        success: false,
+        message: 'Bu subdomain için yetkiniz yok. Kendi subdomain\'inizden giriş yapın.'
+      });
+    }
+    
     // Password kontrolü - plain text karşılaştırma
     if (restaurant.password !== password) {
       console.log('❌ Password mismatch');

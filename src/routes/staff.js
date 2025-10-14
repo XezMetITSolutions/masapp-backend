@@ -731,4 +731,104 @@ router.post('/create-hazal', async (req, res) => {
   }
 });
 
+// POST /api/staff/restore-menu - Restore menu data for Hazal
+router.post('/restore-menu', async (req, res) => {
+  try {
+    if (!MenuCategory || !MenuItem || !Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'Menu system temporarily unavailable - models not loaded'
+      });
+    }
+
+    console.log('🔍 Restoring menu data for Hazal...');
+    
+    // Find Hazal restaurant
+    const hazalRestaurant = await Restaurant.findOne({
+      where: { username: 'hazal' }
+    });
+
+    if (!hazalRestaurant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hazal restaurant not found'
+      });
+    }
+
+    console.log('✅ Hazal restaurant found:', hazalRestaurant.id);
+
+    // Demo menu categories
+    const categories = [
+      {
+        restaurantId: hazalRestaurant.id,
+        name: 'Ana Yemekler',
+        description: 'Geleneksel Türk yemekleri',
+        order: 1,
+        isActive: true
+      },
+      {
+        restaurantId: hazalRestaurant.id,
+        name: 'Çorbalar',
+        description: 'Sıcak çorbalar',
+        order: 2,
+        isActive: true
+      },
+      {
+        restaurantId: hazalRestaurant.id,
+        name: 'Salatalar',
+        description: 'Taze salatalar',
+        order: 3,
+        isActive: true
+      },
+      {
+        restaurantId: hazalRestaurant.id,
+        name: 'İçecekler',
+        description: 'Soğuk ve sıcak içecekler',
+        order: 4,
+        isActive: true
+      }
+    ];
+
+    const createdCategories = [];
+    
+    for (const categoryData of categories) {
+      try {
+        const existingCategory = await MenuCategory.findOne({
+          where: { 
+            restaurantId: categoryData.restaurantId,
+            name: categoryData.name 
+          }
+        });
+
+        if (existingCategory) {
+          console.log(`✅ Category already exists: ${categoryData.name}`);
+          createdCategories.push(existingCategory);
+        } else {
+          const category = await MenuCategory.create(categoryData);
+          console.log(`✅ Category created: ${category.name} (${category.id})`);
+          createdCategories.push(category);
+        }
+      } catch (error) {
+        console.error(`❌ Error creating category ${categoryData.name}:`, error);
+      }
+    }
+
+    console.log('✅ Menu restoration completed');
+
+    res.json({
+      success: true,
+      message: 'Menu data restored successfully',
+      data: createdCategories
+    });
+
+  } catch (error) {
+    console.error('❌ Error restoring menu:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error restoring menu',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;
