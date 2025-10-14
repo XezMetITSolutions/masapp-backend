@@ -313,28 +313,41 @@ router.post('/login', async (req, res) => {
 // GET /api/staff/restaurants - List all restaurants (debug)
 router.get('/restaurants', async (req, res) => {
   try {
+    console.log('🔍 GET /restaurants called');
+    console.log('🔍 Restaurant model loaded:', !!Restaurant);
+    
     if (!Restaurant) {
+      console.error('❌ Restaurant model not available');
       return res.status(503).json({
         success: false,
         message: 'Restaurant system temporarily unavailable'
       });
     }
 
+    console.log('🔍 Fetching restaurants from database...');
     const restaurants = await Restaurant.findAll({
       attributes: ['id', 'name', 'username', 'email'],
       order: [['name', 'ASC']]
     });
+    
+    console.log(`✅ Found ${restaurants.length} restaurants:`, restaurants.map(r => ({ id: r.id, name: r.name, username: r.username })));
 
     res.json({
       success: true,
-      data: restaurants
+      data: restaurants,
+      count: restaurants.length
     });
   } catch (error) {
-    console.error('Error getting restaurants:', error);
+    console.error('❌ Error getting restaurants:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message,
+      errorName: error.name,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
