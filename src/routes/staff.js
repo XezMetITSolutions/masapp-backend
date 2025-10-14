@@ -405,12 +405,7 @@ router.post('/login', async (req, res) => {
         username: username,
         password: password,
         status: 'active'
-      },
-      include: [{
-        model: Restaurant,
-        as: 'restaurant',
-        attributes: ['id', 'name', 'username']
-      }]
+      }
     });
 
     if (!staff) {
@@ -422,7 +417,15 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('✅ Staff found:', staff.name, 'Role:', staff.role);
-    await staff.save();
+
+    // Restaurant bilgisini ayrı sorgu ile getir (include kaynaklı 500 hatalarını önler)
+    let restaurantInfoName = undefined;
+    try {
+      const r = await Restaurant.findByPk(staff.restaurantId, { attributes: ['id', 'name', 'username'] });
+      restaurantInfoName = r?.name;
+    } catch (e) {
+      console.warn('⚠️ Restaurant fetch failed for staff login:', e?.message);
+    }
 
     res.json({
       success: true,
@@ -432,7 +435,7 @@ router.post('/login', async (req, res) => {
         name: staff.name,
         role: staff.role,
         restaurantId: staff.restaurantId,
-        restaurantName: restaurant.name
+        restaurantName: restaurantInfoName
       }
     });
   } catch (error) {
