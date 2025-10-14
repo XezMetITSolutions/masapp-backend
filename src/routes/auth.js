@@ -3,6 +3,15 @@ const router = express.Router();
 const { Restaurant } = require('../models');
 const bcrypt = require('bcryptjs');
 
+// Test endpoint
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Auth route is working',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Restaurant login endpoint
 router.post('/login', async (req, res) => {
   try {
