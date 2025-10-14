@@ -400,37 +400,10 @@ router.post('/login', async (req, res) => {
 
     if (!restaurant) {
       console.log('❌ Restaurant not found for subdomain:', subdomain);
-      
-      // Auto-create restaurant if not found
-      console.log('🔧 Auto-creating restaurant for subdomain:', subdomain);
-      try {
-        const newRestaurant = await Restaurant.create({
-          name: subdomain.charAt(0).toUpperCase() + subdomain.slice(1),
-          username: subdomain,
-          email: `${subdomain}@${subdomain}.com`,
-          password: '123456',
-          phone: '+90 555 000 0000',
-          address: `${subdomain}, İstanbul`,
-          description: `Restaurant ${subdomain}`,
-          logo: null,
-          coverImage: null,
-          status: 'active'
-        });
-        
-        console.log('✅ Restaurant auto-created:', newRestaurant.name, 'ID:', newRestaurant.id);
-        
-        // Note: Staff will be created manually
-        console.log('ℹ️ Restaurant created, staff needs to be created manually');
-        
-        // Use the auto-created restaurant
-        restaurant = newRestaurant;
-      } catch (error) {
-        console.error('❌ Error auto-creating restaurant:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Error creating restaurant'
-        });
-      }
+      return res.status(404).json({
+        success: false,
+        message: 'Restaurant not found'
+      });
     }
 
     console.log('✅ Restaurant found:', restaurant.name, 'ID:', restaurant.id);
