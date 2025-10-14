@@ -419,18 +419,8 @@ router.post('/login', async (req, res) => {
         
         console.log('✅ Restaurant auto-created:', newRestaurant.name, 'ID:', newRestaurant.id);
         
-        // Auto-create demo staff
-        console.log('🔧 Auto-creating demo staff for restaurant:', newRestaurant.id);
-        const demoStaff = await Staff.create({
-          restaurantId: newRestaurant.id,
-          username: `${subdomain}_kasa`,
-          password: '123456',
-          name: `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} Kasa`,
-          role: 'cashier',
-          status: 'active'
-        });
-        
-        console.log('✅ Demo staff auto-created:', demoStaff.name);
+        // Note: Staff will be created manually
+        console.log('ℹ️ Restaurant created, staff needs to be created manually');
         
         // Use the auto-created restaurant
         restaurant = newRestaurant;
@@ -713,3 +703,59 @@ router.post('/restore-restaurants', async (req, res) => {
     });
   }
 });
+
+// POST /api/staff/create-hazal - Create Hazal staff manually
+router.post('/create-hazal', async (req, res) => {
+  try {
+    if (!Staff || !Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'Staff system temporarily unavailable - models not loaded'
+      });
+    }
+
+    console.log('🔍 Creating Hazal staff manually...');
+    
+    // Find Hazal restaurant
+    const hazalRestaurant = await Restaurant.findOne({
+      where: { username: 'hazal' }
+    });
+
+    if (!hazalRestaurant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hazal restaurant not found'
+      });
+    }
+
+    console.log('✅ Hazal restaurant found:', hazalRestaurant.id);
+
+    // Create staff
+    const staff = await Staff.create({
+      restaurantId: hazalRestaurant.id,
+      username: 'hazal_kasa',
+      password: '123456',
+      name: 'Hazal Kasa',
+      role: 'cashier',
+      status: 'active'
+    });
+
+    console.log('✅ Hazal staff created:', staff.name);
+
+    res.json({
+      success: true,
+      message: 'Hazal staff created successfully',
+      data: staff
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating Hazal staff:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating Hazal staff',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+module.exports = router;
