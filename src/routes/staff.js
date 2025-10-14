@@ -196,7 +196,10 @@ router.put('/:staffId', async (req, res) => {
 // DELETE /api/staff/:staffId - Delete staff member
 router.delete('/:staffId', async (req, res) => {
   try {
+    console.log('🗑️ [DELETE] Staff deletion request:', req.params);
+    
     if (!Staff) {
+      console.log('❌ [DELETE] Staff model not loaded');
       return res.status(503).json({
         success: false,
         message: 'Staff system temporarily unavailable - models not loaded'
@@ -204,23 +207,27 @@ router.delete('/:staffId', async (req, res) => {
     }
 
     const { staffId } = req.params;
+    console.log('🔍 [DELETE] Looking for staff with ID:', staffId, 'Type:', typeof staffId);
 
     const staff = await Staff.findByPk(staffId);
     if (!staff) {
+      console.log('❌ [DELETE] Staff not found:', staffId);
       return res.status(404).json({
         success: false,
         message: 'Staff member not found'
       });
     }
 
+    console.log('✅ [DELETE] Staff found, deleting:', staff.id);
     await staff.destroy();
 
+    console.log('✅ [DELETE] Staff deleted successfully');
     res.json({
       success: true,
       message: 'Staff member deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting staff:', error);
+    console.error('❌ [DELETE] Error deleting staff:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
