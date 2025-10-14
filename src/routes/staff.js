@@ -54,7 +54,102 @@ router.get('/restaurant/:restaurantId', async (req, res) => {
   }
 });
 
-module.exports = router;
+// POST /api/staff/create-demo - Create demo staff members
+router.post('/create-demo', async (req, res) => {
+  try {
+    if (!Staff || !Restaurant) {
+      return res.status(503).json({
+        success: false,
+        message: 'Staff system temporarily unavailable - models not loaded'
+      });
+    }
+
+    console.log('🔍 Creating demo staff members...');
+    
+    // Find Hazal restaurant
+    const hazalRestaurant = await Restaurant.findOne({
+      where: { username: 'hazal' }
+    });
+
+    if (!hazalRestaurant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hazal restaurant not found'
+      });
+    }
+
+    console.log('✅ Hazal restaurant found:', hazalRestaurant.id);
+
+    // Demo staff members
+    const staffMembers = [
+      {
+        restaurantId: hazalRestaurant.id,
+        username: 'hazal_kasa',
+        password: '123456',
+        name: 'Hazal Kasa',
+        role: 'cashier',
+        status: 'active'
+      },
+      {
+        restaurantId: hazalRestaurant.id,
+        username: 'hazal_garson',
+        password: '123456',
+        name: 'Hazal Garson',
+        role: 'waiter',
+        status: 'active'
+      },
+      {
+        restaurantId: hazalRestaurant.id,
+        username: 'hazal_mutfak',
+        password: '123456',
+        name: 'Hazal Mutfak',
+        role: 'kitchen',
+        status: 'active'
+      }
+    ];
+
+    const createdStaff = [];
+    
+    for (const staffData of staffMembers) {
+      try {
+        // Check if staff already exists
+        const existingStaff = await Staff.findOne({
+          where: { 
+            restaurantId: staffData.restaurantId,
+            username: staffData.username 
+          }
+        });
+
+        if (existingStaff) {
+          console.log(`✅ Staff already exists: ${staffData.name}`);
+          createdStaff.push(existingStaff);
+        } else {
+          const staff = await Staff.create(staffData);
+          console.log(`✅ Staff created: ${staff.name} (${staff.id})`);
+          createdStaff.push(staff);
+        }
+      } catch (error) {
+        console.error(`❌ Error creating staff ${staffData.name}:`, error);
+      }
+    }
+
+    console.log('✅ Demo staff creation completed');
+
+    res.json({
+      success: true,
+      message: 'Demo staff members created successfully',
+      data: createdStaff
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating demo staff:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating demo staff',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
 
 // POST /api/staff/restaurant/:restaurantId - Create new staff member
 router.post('/restaurant/:restaurantId', async (req, res) => {
