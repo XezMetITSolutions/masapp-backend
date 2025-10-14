@@ -15,28 +15,19 @@ router.get('/test', (req, res) => {
 // Restaurant login endpoint
 router.post('/login', async (req, res) => {
   try {
+    console.log('🔐 Login attempt received');
+    
     const { username, password } = req.body;
     
     if (!username || !password) {
+      console.log('❌ Missing credentials');
       return res.status(400).json({
         success: false,
         message: 'Username and password are required'
       });
     }
     
-    // Subdomain kontrolü - güvenlik açığını kapat
-    const subdomain = req.headers['x-subdomain'] || req.headers['x-forwarded-host']?.split('.')[0];
-    
-    console.log('🔐 Login attempt:', { 
-      username, 
-      subdomain, 
-      hostname: req.headers.host,
-      'x-subdomain': req.headers['x-subdomain'],
-      'x-forwarded-host': req.headers['x-forwarded-host'],
-      'user-agent': req.headers['user-agent'],
-      'origin': req.headers.origin,
-      'referer': req.headers.referer
-    });
+    console.log('🔍 Looking for restaurant:', username);
     
     // Restaurant'ı username ile bul
     const restaurant = await Restaurant.findOne({
@@ -44,35 +35,25 @@ router.post('/login', async (req, res) => {
     });
     
     if (!restaurant) {
+      console.log('❌ Restaurant not found:', username);
       return res.status(401).json({
         success: false,
         message: 'Invalid username or password'
       });
     }
     
-    // SUBNET GÜVENLİK KONTROLÜ - Geçici olarak devre dışı
-    if (false && subdomain && restaurant.username !== subdomain) {
-      console.log('🚨 Subdomain mismatch:', { 
-        restaurantUsername: restaurant.username, 
-        requestSubdomain: subdomain 
-      });
-      return res.status(403).json({
-        success: false,
-        message: 'Bu subdomain için yetkiniz yok. Kendi subdomain\'inizden giriş yapın.'
-      });
-    }
+    console.log('✅ Restaurant found:', restaurant.name);
     
     // Password kontrolü - plain text karşılaştırma
     if (restaurant.password !== password) {
-      console.log('❌ Password mismatch:', { 
-        provided: password, 
-        stored: restaurant.password 
-      });
+      console.log('❌ Password mismatch');
       return res.status(401).json({
         success: false,
         message: 'Invalid username or password'
       });
     }
+    
+    console.log('✅ Login successful for:', restaurant.name);
     
     // Password'u response'dan çıkar
     const { password: _, ...restaurantData } = restaurant.toJSON();
@@ -84,7 +65,7 @@ router.post('/login', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
