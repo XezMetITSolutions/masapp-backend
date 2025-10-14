@@ -396,31 +396,19 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Find restaurant by subdomain
-    console.log('🔍 Looking for restaurant with subdomain:', subdomain);
-    const restaurant = await Restaurant.findOne({
-      where: { username: subdomain }
-    });
-
-    if (!restaurant) {
-      console.log('❌ Restaurant not found for subdomain:', subdomain);
-      return res.status(404).json({
-        success: false,
-        message: 'Restaurant not found'
-      });
-    }
-
-    console.log('✅ Restaurant found:', restaurant.name, 'ID:', restaurant.id);
-
-    // Find staff member
-    console.log('🔍 Looking for staff:', { username, restaurantId: restaurant.id });
+    // Find staff member by username and password (subdomain kontrolü yok)
+    console.log('🔍 Looking for staff:', { username });
     const staff = await Staff.findOne({
       where: {
-        restaurantId: restaurant.id,
         username: username,
         password: password,
         status: 'active'
-      }
+      },
+      include: [{
+        model: Restaurant,
+        as: 'restaurant',
+        attributes: ['id', 'name', 'username']
+      }]
     });
 
     if (!staff) {
