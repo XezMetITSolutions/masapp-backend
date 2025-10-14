@@ -59,6 +59,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     tableName: 'staff',
     timestamps: true,
+    underscored: false, // camelCase field names kullan
     indexes: [
       {
         fields: ['restaurantId']
