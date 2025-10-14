@@ -44,11 +44,19 @@ router.post('/login', async (req, res) => {
     
     console.log('✅ Restaurant found:', restaurant.name);
     
-    // Subdomain kontrolü - geçici olarak devre dışı
+    // Subdomain kontrolü - güvenlik
     const subdomain = req.headers['x-subdomain'] || req.headers['x-forwarded-host']?.split('.')[0];
-    console.log('🔍 Subdomain check:', { subdomain, restaurantUsername: restaurant.username });
+    console.log('🔍 Subdomain check:', { 
+      subdomain, 
+      restaurantUsername: restaurant.username,
+      'x-subdomain': req.headers['x-subdomain'],
+      'x-forwarded-host': req.headers['x-forwarded-host'],
+      host: req.headers.host,
+      origin: req.headers.origin,
+      referer: req.headers.referer
+    });
     
-    if (false && subdomain && restaurant.username !== subdomain) {
+    if (subdomain && restaurant.username !== subdomain) {
       console.log('🚨 Subdomain mismatch - security violation');
       return res.status(403).json({
         success: false,
