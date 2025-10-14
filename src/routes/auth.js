@@ -51,10 +51,12 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // Password kontrolü
-    const isValidPassword = await bcrypt.compare(password, restaurant.password);
-    
-    if (!isValidPassword) {
+    // Password kontrolü - plain text karşılaştırma
+    if (restaurant.password !== password) {
+      console.log('❌ Password mismatch:', { 
+        provided: password, 
+        stored: restaurant.password 
+      });
       return res.status(401).json({
         success: false,
         message: 'Invalid username or password'
