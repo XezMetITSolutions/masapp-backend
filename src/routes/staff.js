@@ -376,6 +376,8 @@ router.get('/list', async (req, res) => {
 // POST /api/staff/login - Staff login
 router.post('/login', async (req, res) => {
   try {
+    console.log('👤 STAFF LOGIN ENDPOINT CALLED');
+    
     if (!Staff || !Restaurant) {
       return res.status(503).json({
         success: false,
@@ -385,8 +387,8 @@ router.post('/login', async (req, res) => {
 
     const { username, password, subdomain } = req.body;
     
-    console.log('🔍 Staff login attempt:', { username, subdomain, password: password ? '***' : 'missing' });
-    console.log('🔍 Request body:', req.body);
+    console.log('👤 Staff login attempt:', { username, subdomain, password: password ? '***' : 'missing' });
+    console.log('👤 Request body:', req.body);
 
     if (!username || !password) {
       console.log('❌ Missing credentials');
