@@ -313,40 +313,36 @@ router.post('/login', async (req, res) => {
 // GET /api/staff/restaurants - List all restaurants (debug)
 router.get('/restaurants', async (req, res) => {
   try {
-    console.log('🔍 GET /restaurants called');
-    console.log('🔍 Restaurant model loaded:', !!Restaurant);
+    console.log('📋 [RESTAURANTS] Fetching all restaurants...');
+    console.log('📋 [RESTAURANTS] Restaurant model exists:', !!Restaurant);
     
     if (!Restaurant) {
-      console.error('❌ Restaurant model not available');
+      console.error('❌ [RESTAURANTS] Restaurant model not loaded');
       return res.status(503).json({
         success: false,
         message: 'Restaurant system temporarily unavailable'
       });
     }
 
-    console.log('🔍 Fetching restaurants from database...');
     const restaurants = await Restaurant.findAll({
       attributes: ['id', 'name', 'username', 'email'],
       order: [['name', 'ASC']]
     });
-    
-    console.log(`✅ Found ${restaurants.length} restaurants:`, restaurants.map(r => ({ id: r.id, name: r.name, username: r.username })));
+
+    console.log('✅ [RESTAURANTS] Found restaurants:', restaurants.length);
+    console.log('📊 [RESTAURANTS] Data:', JSON.stringify(restaurants, null, 2));
 
     res.json({
       success: true,
-      data: restaurants,
-      count: restaurants.length
+      data: restaurants
     });
   } catch (error) {
-    console.error('❌ Error getting restaurants:', error);
-    console.error('❌ Error stack:', error.stack);
-    console.error('❌ Error name:', error.name);
-    console.error('❌ Error message:', error.message);
+    console.error('❌ [RESTAURANTS] Error getting restaurants:', error);
+    console.error('❌ [RESTAURANTS] Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error.message,
-      errorName: error.name,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
