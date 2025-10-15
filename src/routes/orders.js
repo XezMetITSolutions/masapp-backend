@@ -18,7 +18,36 @@ router.get('/', async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
-    res.json({ success: true, data: orders });
+    // Attach items (join OrderItem -> MenuItem) and normalize shape for frontends
+    const orderIds = orders.map(o => o.id);
+    const items = await OrderItem.findAll({
+      where: { orderId: orderIds },
+      include: [{ model: MenuItem, as: 'menuItem', attributes: ['id', 'name', 'price', 'categoryId'] }]
+    });
+
+    const orderIdToItems = new Map();
+    for (const it of items) {
+      const list = orderIdToItems.get(it.orderId) || [];
+      list.push({
+        id: it.menuItemId || it.id,
+        name: it.menuItem?.name || 'Ürün',
+        quantity: Number(it.quantity || 1),
+        price: Number(it.unitPrice || 0),
+        notes: it.notes || '',
+        // Basit varsayım: tüm ürünler food; paneller kategoriye göre filtreliyor
+        category: 'food',
+        status: 'preparing',
+        prepTime: 10
+      });
+      orderIdToItems.set(it.orderId, list);
+    }
+
+    const data = orders.map(o => ({
+      ...o.toJSON(),
+      items: orderIdToItems.get(o.id) || []
+    }));
+
+    res.json({ success: true, data });
   } catch (error) {
     console.error('GET /orders error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
