@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Order, OrderItem, Restaurant, MenuItem, QRToken } = require('../models');
+const { Order, OrderItem, Restaurant, MenuItem, MenuCategory, QRToken } = require('../models');
 
 // GET /api/orders?restaurantId=...&status=...
 router.get('/', async (req, res) => {
@@ -95,8 +95,14 @@ router.post('/', async (req, res) => {
             if (found) {
               resolvedMenuItemId = found.id;
             } else {
+              // ensure default category exists
+              let defCat = await MenuCategory.findOne({ where: { restaurantId, name: 'Genel' } });
+              if (!defCat) {
+                defCat = await MenuCategory.create({ restaurantId, name: 'Genel' });
+              }
               const created = await MenuItem.create({
                 restaurantId,
+                categoryId: defCat.id,
                 name: it.name,
                 price: unitPrice,
                 description: it.notes || null
