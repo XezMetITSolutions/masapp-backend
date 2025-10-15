@@ -83,9 +83,35 @@ router.post('/', async (req, res) => {
     for (const it of items) {
       const qty = Number(it.quantity || 1);
       const unitPrice = Number(it.unitPrice || it.price || 0);
+
+      // Resolve a valid menuItemId: prefer provided UUID; else try name lookup; else create placeholder
+      let resolvedMenuItemId = it.menuItemId;
+      const looksLikeUuid = typeof resolvedMenuItemId === 'string' && resolvedMenuItemId.length >= 8 && resolvedMenuItemId.includes('-');
+      if (!resolvedMenuItemId || !looksLikeUuid) {
+        try {
+          // Try find by name within this restaurant
+          if (it.name) {
+            const found = await MenuItem.findOne({ where: { restaurantId, name: it.name } });
+            if (found) {
+              resolvedMenuItemId = found.id;
+            } else {
+              const created = await MenuItem.create({
+                restaurantId,
+                name: it.name,
+                price: unitPrice,
+                description: it.notes || null
+              });
+              resolvedMenuItemId = created.id;
+            }
+          }
+        } catch (e) {
+          console.warn('MenuItem resolve failed, using null id:', e?.message);
+        }
+      }
+
       await OrderItem.create({
         orderId: order.id,
-        menuItemId: it.menuItemId || it.id || null,
+        menuItemId: resolvedMenuItemId,
         quantity: qty,
         unitPrice,
         totalPrice: qty * unitPrice,
