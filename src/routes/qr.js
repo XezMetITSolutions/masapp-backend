@@ -64,35 +64,47 @@ router.post('/generate', async (req, res) => {
     
     console.log('✅ Restaurant found:', restaurant.name);
     
-    // Deactivate old tokens for this table
-    await QRToken.update(
-      { isActive: false },
-      {
-        where: {
-          restaurantId,
-          tableNumber,
-          isActive: true
-        }
-      }
-    );
-    
-    // Generate new token
-    const token = generateToken();
-    const expiresAt = new Date(Date.now() + duration * 60 * 60 * 1000); // duration hours from now
-    
-    const qrToken = await QRToken.create({
-      restaurantId,
-      tableNumber,
-      token,
-      expiresAt,
-      isActive: true,
-      createdBy: req.body.createdBy || 'waiter'
+    // Try to reuse existing active, not expired token for this table
+    const existing = await QRToken.findOne({
+      where: {
+        restaurantId,
+        tableNumber,
+        isActive: true,
+        expiresAt: { [Op.gt]: new Date() }
+      },
+      order: [['createdAt', 'DESC']]
     });
-    
-    // Generate QR URL
-    const qrUrl = `${process.env.FRONTEND_URL || 'https://guzellestir.com'}/menu/?t=${token}`;
-    
-    res.status(201).json({
+
+    let qrToken;
+    if (existing) {
+      const newExpiresAt = new Date(Date.now() + duration * 60 * 60 * 1000);
+      await existing.update({ expiresAt: newExpiresAt });
+      qrToken = existing;
+    } else {
+      // Deactivate any lingering actives
+      await QRToken.update(
+        { isActive: false },
+        { where: { restaurantId, tableNumber, isActive: true } }
+      );
+
+      const token = generateToken();
+      const expiresAt = new Date(Date.now() + duration * 60 * 60 * 1000);
+      qrToken = await QRToken.create({
+        restaurantId,
+        tableNumber,
+        token,
+        expiresAt,
+        isActive: true,
+        createdBy: req.body.createdBy || 'waiter'
+      });
+    }
+
+    // Build subdomain-based URL if possible
+    const sub = restaurant.username || 'guzellestir';
+    const origin = process.env.FRONTEND_URL || `https://${sub}.guzellestir.com`;
+    const qrUrl = `${origin}/menu/?t=${qrToken.token}&table=${qrToken.tableNumber}`;
+
+    res.status(existing ? 200 : 201).json({
       success: true,
       data: {
         id: qrToken.id,
@@ -100,7 +112,7 @@ router.post('/generate', async (req, res) => {
         tableNumber: qrToken.tableNumber,
         expiresAt: qrToken.expiresAt,
         qrUrl,
-        qrData: qrUrl // URL to encode in QR code
+        qrData: qrUrl
       }
     });
     
