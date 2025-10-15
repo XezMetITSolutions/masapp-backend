@@ -299,6 +299,35 @@ router.delete('/deactivate/:token', async (req, res) => {
   }
 });
 
+// POST /api/qr/deactivate-by-table - Deactivate active token for a table
+router.post('/deactivate-by-table', async (req, res) => {
+  try {
+    const { restaurantId, tableNumber } = req.body;
+    if (!restaurantId || !tableNumber) {
+      return res.status(400).json({ success: false, message: 'restaurantId and tableNumber are required' });
+    }
+
+    const activeToken = await QRToken.findOne({
+      where: {
+        restaurantId,
+        tableNumber,
+        isActive: true
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    if (!activeToken) {
+      return res.status(404).json({ success: false, message: 'Active QR token not found for table' });
+    }
+
+    await activeToken.update({ isActive: false });
+    res.json({ success: true, message: 'QR token deactivated for table' });
+  } catch (error) {
+    console.error('Deactivate by table error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Cron job helper: Clean up expired tokens (call this periodically)
 router.post('/cleanup', async (req, res) => {
   try {

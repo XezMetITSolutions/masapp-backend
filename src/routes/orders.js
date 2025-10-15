@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Order, OrderItem, Restaurant, MenuItem } = require('../models');
+const { Order, OrderItem, Restaurant, MenuItem, QRToken } = require('../models');
 
 // GET /api/orders?restaurantId=...&status=...
 router.get('/', async (req, res) => {
@@ -63,6 +63,10 @@ router.post('/', async (req, res) => {
         notes: it.notes || null
       });
     }
+
+    // Order started: keep QR active until payment; do NOT deactivate here
+    // Deactivation should occur after payment is completed. Placeholder logic below if needed later:
+    // await QRToken.update({ isActive: false }, { where: { restaurantId, tableNumber, isActive: true } });
 
     res.status(201).json({ success: true, data: order, message: 'Order created' });
   } catch (error) {
