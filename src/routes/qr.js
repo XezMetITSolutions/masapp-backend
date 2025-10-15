@@ -134,6 +134,7 @@ router.get('/verify/:token', async (req, res) => {
       where: { token },
       include: [{
         model: Restaurant,
+        as: 'Restaurant',
         attributes: ['id', 'name', 'username']
       }]
     });
