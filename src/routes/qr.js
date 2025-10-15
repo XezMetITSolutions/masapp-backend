@@ -145,25 +145,7 @@ router.get('/verify/:token', async (req, res) => {
       });
     }
     
-    // Check if token is active
-    if (!qrToken.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: 'QR code has been deactivated'
-      });
-    }
-    
-    // Check if token is expired
-    if (isTokenExpired(qrToken.expiresAt)) {
-      // Auto-deactivate expired token
-      await qrToken.update({ isActive: false });
-      
-      return res.status(403).json({
-        success: false,
-        message: 'QR code has expired',
-        expiresAt: qrToken.expiresAt
-      });
-    }
+    // Token validity: Always accept existing tokens (disable isActive/expiry checks)
     
     // Update last used time
     await qrToken.update({ usedAt: new Date() });
