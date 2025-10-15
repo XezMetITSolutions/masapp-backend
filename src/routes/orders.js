@@ -1,26 +1,96 @@
 const express = require('express');
 const router = express.Router();
+const { Order, OrderItem, Restaurant, MenuItem } = require('../models');
 
-// Placeholder order routes
-router.get('/', (req, res) => {
-  res.json({
-    message: 'Get orders endpoint - to be implemented',
-    status: 'placeholder'
-  });
+// GET /api/orders?restaurantId=...&status=...
+router.get('/', async (req, res) => {
+  try {
+    const { restaurantId, status } = req.query;
+    if (!restaurantId) {
+      return res.status(400).json({ success: false, message: 'restaurantId is required' });
+    }
+
+    const where = { restaurantId };
+    if (status) where.status = status;
+
+    const orders = await Order.findAll({
+      where,
+      order: [['created_at', 'DESC']]
+    });
+
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    console.error('GET /orders error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
-router.post('/', (req, res) => {
-  res.json({
-    message: 'Create order endpoint - to be implemented',
-    status: 'placeholder'
-  });
+// POST /api/orders
+router.post('/', async (req, res) => {
+  try {
+    const { restaurantId, tableNumber, customerName, items = [], notes, orderType = 'dine_in' } = req.body;
+    if (!restaurantId || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'restaurantId and items are required' });
+    }
+
+    // Basic total calc if client did not send
+    let totalAmount = 0;
+    for (const it of items) {
+      const qty = Number(it.quantity || 1);
+      const unitPrice = Number(it.unitPrice || it.price || 0);
+      totalAmount += qty * unitPrice;
+    }
+
+    const order = await Order.create({
+      restaurantId,
+      tableNumber: tableNumber || null,
+      customerName: customerName || null,
+      status: 'pending',
+      totalAmount,
+      notes: notes || null,
+      orderType
+    });
+
+    for (const it of items) {
+      const qty = Number(it.quantity || 1);
+      const unitPrice = Number(it.unitPrice || it.price || 0);
+      await OrderItem.create({
+        orderId: order.id,
+        menuItemId: it.menuItemId || it.id || null,
+        quantity: qty,
+        unitPrice,
+        totalPrice: qty * unitPrice,
+        notes: it.notes || null
+      });
+    }
+
+    res.status(201).json({ success: true, data: order, message: 'Order created' });
+  } catch (error) {
+    console.error('POST /orders error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
-router.put('/:id', (req, res) => {
-  res.json({
-    message: `Update order ${req.params.id} endpoint - to be implemented`,
-    status: 'placeholder'
-  });
+// PUT /api/orders/:id (status update)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const allowed = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
+    if (status && !allowed.includes(status)) {
+      return res.status(400).json({ success: false, message: 'invalid status' });
+    }
+
+    const order = await Order.findByPk(id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    if (status) order.status = status;
+    await order.save();
+    res.json({ success: true, data: order });
+  } catch (error) {
+    console.error('PUT /orders/:id error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 module.exports = router;
